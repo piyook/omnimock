@@ -24,7 +24,7 @@
 		"mcp:debug": "npx @modelcontextprotocol/inspector node ./src/mcp/server.js"
 	},
 	"dependencies": {
-		"fastify": "^5.8.1",
+		"fastify": "^5.8.3",
 		"@faker-js/faker": "^10.3.0",
 		"@modelcontextprotocol/sdk": "^1.27.1",
 		"@types/chai-json-schema": "^1.4.10",
