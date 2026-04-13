@@ -24,10 +24,6 @@ const PORT = 8000;
 const server = new McpServer({
 	name: 'MCP Local Mock API Server',
 	version: '1.0.0',
-	capabilities: {
-		resources: {},
-		tools: {},
-	},
 });
 
 server.tool(

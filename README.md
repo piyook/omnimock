@@ -87,7 +87,7 @@ Built with **Fastify** and TypeScript, this framework can run directly on your l
    - Dashboard: http://localhost:8000/
    - API list: http://localhost:8000/api
 
-![main server page](images/image.png)
+![main server page](images/image-1.png)
 
 ### Alternative: Local Development
 

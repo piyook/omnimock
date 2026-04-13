@@ -10,7 +10,7 @@ const homePage = (app: FastifyInstance, apiPaths: string[]) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mock Server Dashboard</title>
+        <title>OmniMock Dashboard</title>
         <style>
             :root {
                 --bg-main: #23272F;
@@ -371,7 +371,7 @@ const homePage = (app: FastifyInstance, apiPaths: string[]) => {
         <main>
             <section class="info-sticky">
               <h6 cy-data="server_version">Version: ${process.env?.npm_package_version ?? 'N/A'}</h6>
-                <h1>Mock Server</h1>
+                <h1>OmniMock Server</h1>
                 <div class="status-box" cy-data="server_status">
                     <span class="status" id="server-status">
                         <span class="status-tick" id="status-icon" aria-label="running" title="Running">
