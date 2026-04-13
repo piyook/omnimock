@@ -1,4 +1,4 @@
-# Local Mock API Framework
+# OmniMock
 
 [![GitHub Release](https://img.shields.io/github/v/release/piyook/mock-api-framework-template)](https://img.shields.io/github/v/release/piyook/mock-api-framework-template)
 [![Github actions](https://github.com/piyook/mock-api-framework-template/actions/workflows/tests.yaml/badge.svg)](https://github.com/piyook/mock-api-framework-template/actions/workflows/tests.yaml/badge.svg)
@@ -47,7 +47,7 @@
 
 ## Overview
 
-A quick-to-setup standalone local mock API framework for developing API endpoints on localhost. Perfect for testing API code, rapid prototyping, and developing frontend clients before deploying to live servers.
+OmniMock is a quick-to-setup standalone local mock API framework for quickly developing API endpoints on localhost. Perfect for testing API code, rapid prototyping, and developing frontend clients before deploying to live servers.
 
 Built with **Fastify** and TypeScript, this framework can run directly on your local machine or in Docker containers.
 
