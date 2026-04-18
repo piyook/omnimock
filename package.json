@@ -31,14 +31,14 @@
 		"@types/shelljs": "^0.10.0",
 		"chai-json-schema": "^1.5.1",
 		"dotenv": "^17.4.2",
-		"fastify": "^5.8.4",
+		"fastify": "^5.8.5",
 		"highlight.js": "^11.11.1",
 		"markdown-it": "^14.1.1",
 		"pretty-print-json": "^3.0.7",
 		"sharp": "^0.34.5",
 		"shelljs": "^0.10.0",
 		"tsx": "^4.21.0",
-		"typescript": "^6.0.2",
+		"typescript": "^6.0.3",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
@@ -46,13 +46,13 @@
 		"@commitlint/config-conventional": "^20.5.0",
 		"@types/aws-lambda": "^8.10.161",
 		"@types/node": "^25.6.0",
-		"cypress": "^15.13.1",
+		"cypress": "^15.14.0",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.4.0",
-		"oxlint": "^1.59.0",
-		"prettier": "3.8.2",
+		"oxlint": "^1.60.0",
+		"prettier": "3.8.3",
 		"start-server-and-test": "^3.0.2",
-		"torch-it": "^2.2.0"
+		"torch-it": "^2.3.1"
 	},
 	"lint-staged": {
 		"src/**/*.{js,jsx,ts,tsx}": "oxlint",
