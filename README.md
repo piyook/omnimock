@@ -104,7 +104,7 @@ npm run dev
 | `npm start`       | Start in Docker                |
 | `npm stop`        | Stop and remove containers     |
 | `npm run rebuild` | Rebuild containers             |
-| `npm run nuke`    | Destroy everything and rebuild |
+| `npm run torch`   | Destroy everything and rebuild |
 | `npm run dev`     | Run locally (for development)  |
 
 ## Creating API Endpoints
