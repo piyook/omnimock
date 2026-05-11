@@ -1,6 +1,6 @@
 {
 	"type": "module",
-	"version": "3.0.4",
+	"version": "3.0.6",
 	"name": "mock-api-server",
 	"description": "A mock API server for development and testing purposes.",
 	"author": "piyook",
@@ -39,20 +39,20 @@
 		"shelljs": "^0.10.0",
 		"tsx": "^4.21.0",
 		"typescript": "^6.0.3",
-		"zod": "^4.3.6"
+		"zod": "^4.4.3"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^20.5.0",
-		"@commitlint/config-conventional": "^20.5.0",
+		"@commitlint/cli": "^21.0.0",
+		"@commitlint/config-conventional": "^21.0.0",
 		"@types/aws-lambda": "^8.10.161",
-		"@types/node": "^25.6.0",
-		"cypress": "^15.14.0",
+		"@types/node": "^25.6.2",
+		"cypress": "^15.14.2",
 		"husky": "^9.1.7",
-		"lint-staged": "^16.4.0",
-		"oxlint": "^1.60.0",
+		"lint-staged": "^17.0.4",
+		"oxlint": "^1.63.0",
 		"prettier": "3.8.3",
-		"start-server-and-test": "^3.0.2",
-		"torch-it": "^2.3.1"
+		"start-server-and-test": "^3.0.4",
+		"torch-it": "^2.6.2"
 	},
 	"lint-staged": {
 		"src/**/*.{js,jsx,ts,tsx}": "oxlint",
