@@ -2,8 +2,8 @@ name: standard checks
 
 on:
     push:
-      branches:
-        - main
+        branches:
+            - main
     workflow_dispatch:
     pull_request:
         types: [opened, edited, synchronize]
@@ -18,8 +18,8 @@ jobs:
             - uses: actions/checkout@v6
             - uses: actions/setup-node@v6
               with:
-                  node-version: '24'
-                  cache: 'npm'
+                  node-version: "24"
+                  cache: "npm"
             - run: npm ci
             - run: npm run lint -- --deny-warnings
 
@@ -29,8 +29,8 @@ jobs:
             - uses: actions/checkout@v6
             - uses: actions/setup-node@v6
               with:
-                  node-version: '24'
-                  cache: 'npm'
+                  node-version: "24"
+                  cache: "npm"
             - run: npm ci
             - run: npm run pretty
 
@@ -40,8 +40,8 @@ jobs:
             - uses: actions/checkout@v6
             - uses: actions/setup-node@v6
               with:
-                  node-version: '24'
-                  cache: 'npm'
+                  node-version: "24"
+                  cache: "npm"
             - run: npm ci
             - run: npm audit --omit=dev
 
@@ -51,6 +51,11 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v6
+            - name: Setup Node
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
             - name: Cypress run
               uses: cypress-io/github-action@v7
               with:
