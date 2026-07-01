@@ -1,5 +1,6 @@
 npm run validate-branch-name
 npm run pretty
 npm run lint
+npm run typecheck
 npm run test:e2e
 npm audit --omit=dev
