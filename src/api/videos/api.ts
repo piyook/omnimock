@@ -4,11 +4,6 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 // Add any http handler here (get, push , delete etc., and middleware as needed)
 
-type VideoListResponse = {
-	mediaType: 'video';
-	files: string[];
-};
-
 type VideoParams = {
 	videoID: string;
 };
@@ -39,10 +34,7 @@ function registerVideoRoutes(app: FastifyInstance, pathName: string) {
 
 	app.get(
 		`/${pathName}/list`,
-		async (
-			_request: FastifyRequest,
-			reply: FastifyReply<VideoListResponse>,
-		) => {
+		async (_request: FastifyRequest, reply: FastifyReply) => {
 			const files = fs.readdirSync('./src/resources/videos');
 			reply.send({ mediaType: 'video', files });
 		},

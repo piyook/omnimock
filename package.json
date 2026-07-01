@@ -21,7 +21,8 @@
 		"cypress:run": "cypress run --e2e",
 		"validate-branch-name": "bash validate-branch-name.sh",
 		"mcp:build": "tsc ./src/mcp/server.ts --target esnext --moduleResolution nodenext --module nodenext",
-		"mcp:debug": "npx @modelcontextprotocol/inspector node ./src/mcp/server.js"
+		"mcp:debug": "npx @modelcontextprotocol/inspector node ./src/mcp/server.js",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@faker-js/faker": "^10.5.0",

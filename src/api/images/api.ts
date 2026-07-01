@@ -5,11 +5,6 @@ import sharp from 'sharp';
 
 // Add any http handler here (get, push , delete etc., and middleware as needed)
 
-type ImageListResponse = {
-	mediaType: 'image';
-	files: string[];
-};
-
 type ImageParams = {
 	imageID: string;
 };
@@ -46,10 +41,7 @@ function registerImageRoutes(app: FastifyInstance, pathName: string) {
 
 	app.get(
 		`/${pathName}/list`,
-		async (
-			_request: FastifyRequest,
-			reply: FastifyReply<ImageListResponse>,
-		) => {
+		async (_request: FastifyRequest, reply: FastifyReply) => {
 			const files = fs.readdirSync('./src/resources/images');
 			reply.send({ mediaType: 'image', files });
 		},
@@ -72,7 +64,7 @@ function registerImageRoutes(app: FastifyInstance, pathName: string) {
 
 			try {
 				// Convert width and height to integers, if provided
-				const resizeOptions: sharp.ResizeOptions = {};
+				const resizeOptions: Record<string, number> = {};
 				if (width && height)
 					resizeOptions.width = Number.parseInt(width, 10);
 				if (height && width)
