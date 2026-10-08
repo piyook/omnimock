@@ -32,6 +32,10 @@ beforeEach(() => {
 		stored = null;
 	});
 	vi.stubEnv('LOG_REQUESTS', 'ON');
+	// The logger keeps the entries of the test before; this makes it read
+	// `stored` again
+	clearLog();
+	vi.mocked(fs.rmSync).mockClear();
 });
 
 afterEach(() => {
@@ -103,6 +107,24 @@ describe('logger', () => {
 		}
 
 		expect(ids()).toEqual([3, 2]);
+	});
+
+	it('reads the log file once, then adds to what it holds', () => {
+		stored = JSON.stringify([{ sent_data: { id: 1 } }]);
+
+		logger({ data: { id: 2 }, pathName: 'api/bikes' });
+		logger({ data: { id: 3 }, pathName: 'api/bikes' });
+
+		expect(ids()).toEqual([3, 2, 1]);
+		expect(fs.readFileSync).toHaveBeenCalledTimes(1);
+	});
+
+	it('starts from an empty log after it is cleared', () => {
+		logger({ data: { id: 1 }, pathName: 'api/bikes' });
+		clearLog();
+		logger({ data: { id: 2 }, pathName: 'api/bikes' });
+
+		expect(ids()).toEqual([2]);
 	});
 
 	it.each([

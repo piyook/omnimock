@@ -28,6 +28,10 @@ export function maxLogEntries(): number {
 	return Math.min(setting, logEntriesLimit);
 }
 
+// The logged requests, kept here so that a request doesn't have to read the
+// file back to add itself. null until the file has been read.
+let logEntries: unknown[] | null = null;
+
 // The entries already in the log file, [] if it is missing or unreadable
 function readLogEntries(): unknown[] {
 	try {
@@ -40,6 +44,7 @@ function readLogEntries(): unknown[] {
 
 // Empties the log by removing its file; fine if there is none
 export function clearLog() {
+	logEntries = null;
 	fs.rmSync(logPath, { force: true });
 }
 
@@ -69,10 +74,13 @@ function logger({
 		sent_data: data,
 	};
 
-	const entries = [logEntry, ...readLogEntries()].slice(0, maxLogEntries());
+	logEntries = [logEntry, ...(logEntries ?? readLogEntries())].slice(
+		0,
+		maxLogEntries(),
+	);
 
 	fs.mkdirSync(logFolder, { recursive: true });
-	fs.writeFileSync(logPath, JSON.stringify(entries, null, 2));
+	fs.writeFileSync(logPath, JSON.stringify(logEntries, null, 2));
 }
 
 export default logger;
