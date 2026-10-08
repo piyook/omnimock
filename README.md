@@ -59,7 +59,8 @@ Built with **Fastify** and TypeScript, this framework can run directly on your l
 - **AWS Lambda Testing**: Develop and test Lambda functions locally
 - **Custom Middleware**: Transform input/output with custom logic
 - **Error Mocking**: Test frontend error handling with configurable error responses
-- **Request Logging**: Store and view API requests at `localhost:8000/logs`
+- **Chaos Mode**: Fail some calls with an HTTP error to test intermittent failures
+- **Request Logging**: Store API requests and view them in the dashboard
 - **MCP Server**: Experimental LLM agent integration for server management
 
 ## Quick Start
@@ -90,6 +91,8 @@ Built with **Fastify** and TypeScript, this framework can run directly on your l
 
 ![main server page](images/image-1.png)
 
+The dashboard shows the server settings, every endpoint, the chaos settings and the request log.
+
 ### Alternative: Local Development
 
 For active development:
@@ -97,6 +100,18 @@ For active development:
 ```bash
 npm run dev
 ```
+
+This builds the dashboard into `ui/dist`, then starts the server and restarts it when a file in `src` changes.
+
+### Working on the Dashboard
+
+The dashboard is a Svelte app in `ui/`, served by the mock server from `ui/dist`. For hot reload while changing it, keep `npm run dev` running and start the Vite dev server beside it:
+
+```bash
+npm run ui-dev
+```
+
+It runs on http://localhost:5173/ and passes `/ping`, `/ui-meta`, `/ui-request-log` and `/api` on to the mock server on port 8000. The dashboard reads everything it shows from `/ui-meta`.
 
 ### Useful Commands
 
@@ -107,6 +122,11 @@ npm run dev
 | `npm run rebuild` | Rebuild containers             |
 | `npm run torch`   | Destroy everything and rebuild |
 | `npm run dev`     | Run locally (for development)  |
+| `npm run ui-dev`  | Dashboard dev server (hot reload) |
+| `npm run compile-ui` | Build the dashboard into `ui/dist` |
+| `npm run lint`    | Lint and format check (Biome)  |
+| `npm run test:coverage` | Unit tests with coverage |
+| `npm run test:e2e` | Cypress tests, with and without chaos |
 
 ## Creating API Endpoints
 
@@ -364,7 +384,7 @@ A failing call gets the status you set, in place of the endpoint's own reply:
 
 - The response carries an `x-omnimock-chaos: true` header, so a test can tell an injected error from a real one.
 - A 429 or 503 also carries `Retry-After: 1`.
-- Every endpoint in `src/api` is covered, whatever the method, with no change to its handler. The dashboard, the logs page, the `/api` endpoint list and the error endpoint are never failed and are not counted.
+- Every endpoint in `src/api` is covered, whatever the method, with no change to its handler. The dashboard, the `/api` endpoint list and the error endpoint are never failed and are not counted.
 - A setting that isn't valid falls back to its default: every call, `every` mode, status 500.
 
 ### CORS Configuration
@@ -399,9 +419,7 @@ Lambda functions created using `NodeJSFunction()` in the AWS CDK will be built a
 
 ## Request Logging
 
-Monitor API requests and responses at `localhost:8000/logs`.
-
-![logging](images/logs.png)
+View the most recent API requests in the dashboard: **View request log** opens them one at a time, newest first, with a button to clear the log. The same list is served as JSON at `localhost:8000/ui-request-log` and stored in `src/logs/api_request_log.json`.
 
 ### Enable Logging
 
@@ -410,6 +428,8 @@ Set environment variables in `.env`:
 ```
 LOG_REQUESTS=ON
 DELETE_LOGS_ON_SERVER_RESTART=ON
+# How many requests the log keeps (1 to 100, default 10)
+MAX_LOGGED_REQUESTS=10
 ```
 
 ### Implement Logging
@@ -442,6 +462,7 @@ SERVER_PORT=8000
 # Logging
 LOG_REQUESTS=ON
 DELETE_LOGS_ON_SERVER_RESTART=ON
+MAX_LOGGED_REQUESTS=10
 
 # Chaos mode (see Chaos Mode)
 CHAOS_ENABLED=OFF
@@ -539,7 +560,9 @@ src/
 │   └── json/
 ├── logs/                # Request logs
 ├── mcp/                 # MCP server files
+├── tests/               # Unit tests (Vitest)
 └── utilities/           # Helper functions
+ui/                      # Svelte dashboard (built into ui/dist)
 ```
 
 ## Contributing

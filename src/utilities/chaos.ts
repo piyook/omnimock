@@ -70,7 +70,7 @@ export function buildChaosError(status: number): { error: string } {
 
 /**
  * Tells chaos which routes it can fail: the folders of src/api, as returned by
- * getApiRoutes. The dashboard, the logs and the list of endpoints are not
+ * getApiRoutes. The dashboard and the list of endpoints are not
  * among them, so they always answer.
  */
 export function setChaosRoutes(apiRoutes: string[]): void {

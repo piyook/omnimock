@@ -4,3 +4,5 @@ cypress/screenshots/
 cypress/videos/
 .mock-data/
 coverage/
+ui/dist/
+src/logs/*.json

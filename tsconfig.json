@@ -113,5 +113,5 @@
 		"ignoreDeprecations": "6.0" /* ignore until CYPRESS fixes issues with TS6 compatibility  */
 	},
 	"include": ["./src", "**/*.ts"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules", "ui"]
 }
