@@ -25,7 +25,7 @@ describe('getChaosConfig', () => {
 	it('is off with the defaults when nothing is set', () => {
 		expect(getChaosConfig()).toEqual({
 			enabled: false,
-			frequency: 1,
+			frequency: 5,
 			mode: 'every',
 			status: 500,
 		});
@@ -46,11 +46,11 @@ describe('getChaosConfig', () => {
 	});
 
 	it.each([['0'], ['-2'], ['often']])(
-		'falls back to every call for a frequency of %s',
+		'falls back to 1 in 5 calls for a frequency of %s',
 		(frequency) => {
 			vi.stubEnv('CHAOS_FREQUENCY', frequency);
 
-			expect(getChaosConfig().frequency).toBe(1);
+			expect(getChaosConfig().frequency).toBe(5);
 		},
 	);
 
@@ -150,6 +150,7 @@ describe('registerChaos', () => {
 
 	it.each([429, 503])('sends Retry-After with a %i', async (status) => {
 		vi.stubEnv('CHAOS_ENABLED', 'ON');
+		vi.stubEnv('CHAOS_FREQUENCY', '1');
 		vi.stubEnv('CHAOS_STATUS', String(status));
 
 		const response = await buildApp().inject('/api/bikes');
@@ -160,10 +161,35 @@ describe('registerChaos', () => {
 
 	it('neither fails nor counts a call to another route', async () => {
 		vi.stubEnv('CHAOS_ENABLED', 'ON');
+		vi.stubEnv('CHAOS_FREQUENCY', '1');
 
 		const response = await buildApp().inject('/api');
 
 		expect(response.statusCode).toBe(200);
 		expect(getChaosStats()).toEqual({ calls: 0, injected: 0 });
+	});
+
+	it.each([
+		['a path with no route', 'GET', '/api/bikes/1/parts'],
+		['a method with no route', 'OPTIONS', '/api/bikes'],
+	] as const)('neither fails nor counts %s', async (_name, method, url) => {
+		vi.stubEnv('CHAOS_ENABLED', 'ON');
+		vi.stubEnv('CHAOS_FREQUENCY', '1');
+
+		const response = await buildApp().inject({ method, url });
+
+		expect(response.statusCode).toBe(404);
+		expect(response.headers).not.toHaveProperty('x-omnimock-chaos');
+		expect(getChaosStats()).toEqual({ calls: 0, injected: 0 });
+	});
+
+	it('fails a call sent with an encoded URL', async () => {
+		vi.stubEnv('CHAOS_ENABLED', 'ON');
+		vi.stubEnv('CHAOS_FREQUENCY', '1');
+
+		const response = await buildApp().inject('/api/b%69kes');
+
+		expect(response.statusCode).toBe(500);
+		expect(getChaosStats()).toEqual({ calls: 1, injected: 1 });
 	});
 });
