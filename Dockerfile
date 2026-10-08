@@ -13,4 +13,5 @@ RUN npm --prefix ui ci --silent && npm run compile-ui
 EXPOSE 9090
 RUN chown -R node /usr/src/app
 USER node
-CMD ["npm", "run","dev"]
+# The dashboard is already built (above), so only the server is started
+CMD ["npm", "run", "dev:server"]

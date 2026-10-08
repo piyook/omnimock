@@ -6,7 +6,8 @@
 	"author": "piyook",
 	"scripts": {
 		"postinstall": "node scripts/postinstall.mjs",
-		"dev": "npm run compile-ui && tsx watch ./src/server.ts",
+		"dev": "(npm run compile-ui || echo Dashboard build failed - starting the server without it) && npm run dev:server",
+		"dev:server": "tsx watch ./src/server.ts",
 		"ui-dev": "npm --prefix ui run dev",
 		"compile-ui": "npm --prefix ui run build",
 		"start": "docker compose up -d",
