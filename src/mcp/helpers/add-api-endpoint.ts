@@ -1,32 +1,56 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {
+	invalidNameMessage,
+	isSafeName,
+	projectRoot,
+	serverUrl,
+	type ToolResult,
+	urlPrefix,
+} from './project.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const defaultApiDir = path.join(projectRoot, 'src', 'api');
 
 const addApiEndpoint = async (
-	name: string,
-	description: string,
-	code: string,
-) => {
+	name: string | undefined,
+	description: string | undefined,
+	code: string | undefined,
+	apiDir = defaultApiDir,
+): Promise<ToolResult> => {
 	if (!name || !description || !code) {
-		return 'API Endpoint Not created. Name, description, and handler code are required to create a new API endpoint.';
+		return {
+			ok: false,
+			message:
+				'API Endpoint Not created. Name, description, and handler code are required to create a new API endpoint.',
+		};
+	}
+
+	if (!isSafeName(name)) {
+		return {
+			ok: false,
+			message: `API Endpoint Not created. ${invalidNameMessage(name)}`,
+		};
 	}
 
 	// Create path to the endpoint directory
-	const endpointDir = path.join(__dirname, '..', `..`, 'api', name);
+	const endpointDir = path.join(apiDir, name);
 	const apiPath = path.join(endpointDir, `api.ts`); // or 'index.ts'
 
 	if (fs.existsSync(apiPath)) {
-		return `API Endpoint Not created. API endpoint ${name} already exists.`;
+		return {
+			ok: false,
+			message: `API Endpoint Not created. API endpoint ${name} already exists.`,
+		};
 	}
 
 	// Create the endpoint directory first
 	fs.mkdirSync(endpointDir, { recursive: true });
 	// Then create the file inside the directory
 	fs.writeFileSync(apiPath, code, 'utf8');
-	return `API Endpoint ${name} created successfully at ${apiPath}.`;
+	return {
+		ok: true,
+		message: `API Endpoint ${name} created successfully at ${apiPath}. Rebuild the server to serve it at ${serverUrl}/${urlPrefix}${name}.`,
+	};
 };
 
 export { addApiEndpoint };

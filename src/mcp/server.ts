@@ -1,37 +1,42 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { getApiEndpoints } from './helpers/get-all-endpoints.js';
-import { addApiEndpoint } from './helpers/add-api-endpoint.js';
 import { apiHandlerExample } from './data/api-handler-example.js';
+import { addApiEndpoint } from './helpers/add-api-endpoint.js';
 import { addMediaEndpoint } from './helpers/add-media-endpoint.js';
+import { manageServer } from './helpers/control-mock-server.js';
+import { getApiEndpoints } from './helpers/get-all-endpoints.js';
 import {
-	startMockServer,
-	stopMockServer,
-	rebuildMockServer,
-} from './helpers/control-mock-server.js';
-import path from 'path';
+	serverUrl,
+	type ToolResult,
+	urlPrefix,
+	version,
+} from './helpers/project.js';
 
-import { fileURLToPath } from 'node:url';
+// The port and the url prefix come from SERVER_PORT and USE_API_URL_PREFIX in .env
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Change this to the port you want to use for your local mock API server
-const PORT = 8000;
+// Nothing here may write to stdout (console.log): it carries the MCP messages.
+// Use console.error for anything the person running the server should see.
 
 // Create server instance
 const server = new McpServer({
 	name: 'MCP Local Mock API Server',
-	version: '1.0.0',
+	version,
+});
+
+// A failure is flagged, so the agent can tell it from a result
+const reply = ({ ok, message }: ToolResult) => ({
+	content: [{ type: 'text' as const, text: message }],
+	isError: !ok,
 });
 
 server.tool(
 	'create_new_api_endpoint',
-	`create new api endpoint for the local mock API server using the supplied standard code format as a basis for the new api code. 
+	`create new api endpoint for the local mock API server using the supplied standard code format as a basis for the new api code.
+	The server runs in Docker and needs to be rebuilt (manage_local_mock_api_server, action rebuild) before it serves the new endpoint.
 	Args:
 	- action: get_code_format (gets standard code format) or add_endpoint(creates new api endpoint using supplied code)
-	- name: Name of the API endpoint (only required for add_endpoint action)
+	- name: Name of the API endpoint, used as its url path: letters, numbers, hyphens and underscores only (only required for add_endpoint action)
 	- description: Description of the API endpoint (only required for add_endpoint action)
 	- code: Code for the API endpoint (should be a valid TypeScript file content following the format described in the get_code_format request )`,
 	{
@@ -43,65 +48,33 @@ server.tool(
 	async (input) => {
 		const { action, name, description, code } = input;
 
-		switch (action) {
-			case 'get_code_format':
-				// Return the format for API endpoint code generation
-				return {
-					content: [
-						{
-							type: 'text',
-							text: `API endpoint code needs to follow the format in the example below:
-									${apiHandlerExample()}
-									This is a TypeScript file that exports a function that returns an array of HTTP handlers.
-									Create new API endpoint code using a similar pattern.`,
-						},
-					],
-				};
-
-			case 'add_endpoint':
-				// Handle the 'add' action to add a new API endpoint
-				if (!name || !description || !code) {
-					return {
-						content: [
-							{
-								type: 'text',
-								text: 'Name, description, and code are required for adding a new API endpoint.',
-							},
-						],
-					};
-				}
-				const result = await addApiEndpoint(name, description, code);
-				return {
-					content: [
-						{
-							type: 'text',
-							text: result,
-						},
-					],
-				};
-
-			default:
-				return {
-					content: [
-						{
-							type: 'text',
-							text: 'Invalid action specified. Use "get_endpoints", "start_server", "stop_server", "rebuild_server`or "add_endpoint".',
-						},
-					],
-				};
+		if (action === 'get_code_format') {
+			// Return the format for API endpoint code generation
+			return reply({
+				ok: true,
+				message: `API endpoint code needs to follow the format in the example below:
+								${apiHandlerExample()}
+								This is a TypeScript file whose default export is a function taking the Fastify app and the endpoint's path name, and registering the endpoint's routes on the app.
+								It is saved as src/api/{name}/api.ts, so keep the relative import paths as they are in the example.
+								A file that fails to load stops the whole mock server from starting.
+								Create new API endpoint code using a similar pattern.`,
+			});
 		}
+
+		// add_endpoint: the helper refuses a missing name, description or code
+		return reply(await addApiEndpoint(name, description, code));
 	},
 );
 
 server.tool(
 	'manage_local_mock_api_server',
-	`Manage the local mock server on localhost running in Docker (Docker must be installed and running). 	
+	`Manage the local mock server on localhost running in Docker (Docker must be installed and running).
 	Args:
-	action: one of the following actions: 
-		get (gets all available api endpoints), 
-		start (starts server), 
-		stop (stops server), 
-		rebuild (rebuild server to register new code changes) 
+	action: one of the following actions:
+		get (gets all available api endpoints),
+		start (starts server),
+		stop (stops server),
+		rebuild (rebuild server to register new code changes - this can take a few minutes)
 		`,
 	{
 		action: z.enum(['get', 'start', 'stop', 'rebuild']),
@@ -109,70 +82,25 @@ server.tool(
 	async (input) => {
 		const { action } = input;
 
-		switch (action) {
-			case 'get':
-				return {
-					content: [
-						{
-							type: 'text',
-							text: await getApiEndpoints(PORT),
-						},
-					],
-				};
-
-			case 'start':
-				return {
-					content: [
-						{
-							type: 'text',
-							text: await startMockServer(PORT),
-						},
-					],
-				};
-
-			case 'stop':
-				return {
-					content: [
-						{
-							type: 'text',
-							text: await stopMockServer(PORT),
-						},
-					],
-				};
-
-			case 'rebuild':
-				return {
-					content: [
-						{
-							type: 'text',
-							text: await rebuildMockServer(PORT),
-						},
-					],
-				};
-			default:
-				return {
-					content: [
-						{
-							type: 'text',
-							text: 'Invalid action specified. Use "get_endpoints", "start_server", "stop_server", "rebuild_server`or "add_endpoint".',
-						},
-					],
-				};
+		if (action === 'get') {
+			return reply(await getApiEndpoints());
 		}
+
+		return reply(await manageServer(action));
 	},
 );
 
 server.tool(
 	'create_new_media_endpoint',
-	`create new media api endpoint for the local mock API server by passing a base64 encoded string of an image or video, a path to a locally saved file or a url containing the media. Once saved to the local system this media can be then be accessed from the endpoint at 
-	http://localhost:8000/api/{images|videos}/mediaName.fileType.
-	A list of ALL media files in a folder can be obtained from http://localhost:8000/api/{images|videos}/list.
+	`create new media api endpoint for the local mock API server by passing a base64 encoded string of an image or video, a path to a locally saved file or a url containing the media. Once saved to the local system this media can be then be accessed from the endpoint at
+	${serverUrl}/${urlPrefix}{images|videos}/mediaName.fileType.
+	A list of ALL media files in a folder can be obtained from ${serverUrl}/${urlPrefix}{images|videos}/list.
 	Images and videos should be 1000px x 1000px.
 	If running in docker the server will need to be rebuilt to see the new media.
 	Args:
-	- mediaName: file name for the media endpoint
+	- mediaName: file name for the media endpoint, without the file type: letters, numbers, hyphens and underscores only
 	- type: type of media (images or videos)
-	- fileType: type of file (png or mp4)
+	- fileType: type of file (png for images or mp4 for videos)
 	- image: This can be a base64 string, data URL, file path, or URL
 `,
 	{
@@ -182,19 +110,14 @@ server.tool(
 		image: z.string(),
 	},
 	async (input) => {
-		return {
-			content: [
-				{
-					type: 'text',
-					text: await addMediaEndpoint(
-						input.mediaName,
-						input.type,
-						input.fileType,
-						input.image,
-					),
-				},
-			],
-		};
+		return reply(
+			await addMediaEndpoint(
+				input.mediaName,
+				input.type,
+				input.fileType,
+				input.image,
+			),
+		);
 	},
 );
 

@@ -3,3 +3,7 @@ node_modules
 cypress/screenshots/
 cypress/videos/
 .mock-data/
+coverage/
+ui/dist/
+src/logs/*.json
+src/mcp/**/*.js

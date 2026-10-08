@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { db } from '../models/db.js';
-import { type Post } from '../types.js';
+import type { Post } from '../types.js';
 
 const require = createRequire(import.meta.url);
 const postData: Post[] = require('../data/data.json');

@@ -35,7 +35,10 @@ function registerImageRoutes(app: FastifyInstance, pathName: string) {
                 </div>
                 </body>`;
 
-			reply.header('Content-Type', 'text/html').header('Access-Control-Allow-Origin', '*').send(html);
+			reply
+				.header('Content-Type', 'text/html')
+				.header('Access-Control-Allow-Origin', '*')
+				.send(html);
 		},
 	);
 
@@ -52,7 +55,10 @@ function registerImageRoutes(app: FastifyInstance, pathName: string) {
 	app.get(
 		`/${pathName}/:imageID`,
 		async (
-			request: FastifyRequest<{ Params: ImageParams; Querystring: ImageQuery }>,
+			request: FastifyRequest<{
+				Params: ImageParams;
+				Querystring: ImageQuery;
+			}>,
 			reply: FastifyReply,
 		) => {
 			const { imageID } = request.params;

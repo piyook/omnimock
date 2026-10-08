@@ -1,34 +1,49 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import https from 'node:https';
-import http from 'node:http';
+import {
+	invalidNameMessage,
+	isSafeName,
+	projectRoot,
+	serverUrl,
+	type ToolResult,
+	urlPrefix,
+} from './project.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const defaultResourcesDir = path.join(projectRoot, 'src', 'resources');
 
-// Helper function to download file from URL
-const downloadFile = (url: string): Promise<Buffer> => {
-	return new Promise((resolve, reject) => {
-		const client = url.startsWith('https:') ? https : http;
+// The folder each file type is served from
+const folderFor = { png: 'images', mp4: 'videos' } as const;
 
-		client
-			.get(url, (response) => {
-				if (response.statusCode !== 200) {
-					reject(
-						new Error(`Failed to download: ${response.statusCode}`),
-					);
-					return;
-				}
+const notCreated = (reason: string): ToolResult => ({
+	ok: false,
+	message: `Media API Endpoint Not created. ${reason}`,
+});
 
-				const chunks: Buffer[] = [];
-				response.on('data', (chunk) => chunks.push(chunk));
-				response.on('end', () => resolve(Buffer.concat(chunks)));
-				response.on('error', reject);
-			})
-			.on('error', reject);
-	});
+// The media as bytes, from a URL, a data URL, a file path or a base64 string
+const readSource = async (source: string): Promise<Buffer> => {
+	if (/^https?:\/\//.test(source)) {
+		// fetch follows redirects, which image hosts often use
+		const response = await fetch(source);
+		if (!response.ok) {
+			throw new Error(`Failed to download: ${response.status}`);
+		}
+		return Buffer.from(await response.arrayBuffer());
+	}
+
+	if (source.startsWith('data:')) {
+		return Buffer.from(source.split(',')[1] ?? '', 'base64');
+	}
+
+	if (fs.existsSync(source)) {
+		return fs.readFileSync(source);
+	}
+
+	if (/^[A-Za-z0-9+/=]+$/.test(source)) {
+		return Buffer.from(source, 'base64');
+	}
+
+	throw new Error('Invalid input: must be URL, file path, or base64 string');
 };
 
 // Function to add media to a specified directory in a local file system
@@ -37,77 +52,50 @@ const addMediaEndpoint = async (
 	type: 'videos' | 'images',
 	fileType: 'png' | 'mp4',
 	image: string, // This can be a base64 string, data URL, file path, or URL
-) => {
+	resourcesDir = defaultResourcesDir,
+): Promise<ToolResult> => {
 	if (!mediaName || !type || !fileType || !image) {
-		return 'Media API Endpoint Not created. mediaName, type, fileType, and image are required to create a new API endpoint.';
+		return notCreated(
+			'mediaName, type, fileType, and image are required to create a new API endpoint.',
+		);
+	}
+
+	if (!isSafeName(mediaName)) {
+		return notCreated(invalidNameMessage(mediaName));
+	}
+
+	if (folderFor[fileType] !== type) {
+		return notCreated(`Unsupported combination: ${fileType} for ${type}`);
 	}
 
 	// Create path to the endpoint directory
-	const endpointDir = path.join(__dirname, '..', '..', 'resources', type);
-	const apiPath = path.join(endpointDir, `${mediaName}.${fileType}`);
+	const endpointDir = path.join(resourcesDir, type);
+	const fileName = `${mediaName}.${fileType}`;
+	const apiPath = path.join(endpointDir, fileName);
 
 	if (fs.existsSync(apiPath)) {
-		return `API Endpoint Not created. API endpoint ${mediaName}.${fileType} already exists.`;
+		return notCreated(`API endpoint ${fileName} already exists.`);
 	}
 
 	try {
-		// Create the endpoint directory first
+		const source = await readSource(image);
 		fs.mkdirSync(endpointDir, { recursive: true });
 
-		let sourceBuffer: Buffer | null = null;
-		let sourcePath: string | null = null;
-
-		// Determine input type and get buffer/path
-		if (image.startsWith('http://') || image.startsWith('https://')) {
-			// Download from URL
-			console.log(`Downloading from URL: ${image}`);
-			sourceBuffer = await downloadFile(image);
-		} else if (image.startsWith('data:')) {
-			// Handle data URL format
-			const base64Data = image.split(',')[1];
-			sourceBuffer = Buffer.from(base64Data, 'base64');
-		} else if (fs.existsSync(image)) {
-			// Handle local file path
-			sourcePath = image;
-		} else if (image.match(/^[A-Za-z0-9+/=]+$/)) {
-			// Assume it's a base64 string
-			sourceBuffer = Buffer.from(image, 'base64');
+		if (fileType === 'png') {
+			await sharp(source).resize(1000, 1000).png().toFile(apiPath);
 		} else {
-			throw new Error(
-				'Invalid input: must be URL, file path, or base64 string',
-			);
+			fs.writeFileSync(apiPath, source);
 		}
 
-		// Process based on file type
-		if (fileType === 'png' && type === 'images') {
-			if (sourcePath) {
-				// Use sharp with file path
-				await sharp(sourcePath)
-					.resize(1000, 1000)
-					.png()
-					.toFile(apiPath);
-			} else if (sourceBuffer) {
-				// Use sharp with buffer
-				await sharp(sourceBuffer)
-					.resize(1000, 1000)
-					.png()
-					.toFile(apiPath);
-			}
-		} else if (fileType === 'mp4' && type === 'videos') {
-			if (sourcePath) {
-				// Copy video file directly
-				fs.copyFileSync(sourcePath, apiPath);
-			} else if (sourceBuffer) {
-				// Write buffer to file
-				fs.writeFileSync(apiPath, sourceBuffer);
-			}
-		} else {
-			throw new Error(`Unsupported combination: ${fileType} for ${type}`);
-		}
-
-		return `API Endpoint ${mediaName} created successfully at ${apiPath}.`;
+		return {
+			ok: true,
+			message: `API Endpoint ${mediaName} created successfully at ${apiPath}. Rebuild the server to serve it at ${serverUrl}/${urlPrefix}${type}/${fileName}.`,
+		};
 	} catch (error) {
-		return `Failed to create API endpoint: ${error instanceof Error ? error.message : 'Unknown error'}`;
+		return {
+			ok: false,
+			message: `Failed to create API endpoint: ${error instanceof Error ? error.message : 'Unknown error'}`,
+		};
 	}
 };
 

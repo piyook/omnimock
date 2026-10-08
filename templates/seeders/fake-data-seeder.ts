@@ -6,9 +6,9 @@ import { db } from '../../src/models/db.js';
 
 // Never start at 0 - this will break the primary key
 export const catSeeder = () => {
-    for (let i = 1; i < 100; i++) {
-        db.cat.create({
-            id: i,
-        });
-    }
+	for (let i = 1; i < 100; i++) {
+		db.cat.create({
+			id: i,
+		});
+	}
 };

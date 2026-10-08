@@ -1,25 +1,32 @@
 import 'dotenv/config';
 import fastify from 'fastify';
-import * as seeders from './seeders/index.js';
 import { dbFlushToDisk, dbLoadFromDisk } from './models/db.js';
-import getApiRoutes from './utilities/file-scan.js';
-import serverPage from './utilities/server-page.js';
-import logPage from './utilities/log-page.js';
-import { deleteLogs } from './utilities/logger.js';
+import * as seeders from './seeders/index.js';
 import { apiList } from './utilities/api-list.js';
+import {
+	getChaosConfig,
+	registerChaos,
+	setChaosRoutes,
+} from './utilities/chaos.js';
 import { env } from './utilities/env.js';
+import getApiRoutes from './utilities/file-scan.js';
+import { clearLog } from './utilities/logger.js';
+import serverPage from './utilities/server-page.js';
 
 const app = fastify();
 
+// Before the routes, so that its hook covers them
+registerChaos(app);
+
 const { apiRoutes } = await getApiRoutes(app);
+setChaosRoutes(apiRoutes);
 
 serverPage(app, apiRoutes);
-logPage(app);
 apiList(app, apiRoutes);
 
 // Delete any logs on server start if the DELETE_LOGS_ON_SERVER_RESTART env var is set to 'ON'
 if (process.env?.DELETE_LOGS_ON_SERVER_RESTART?.toUpperCase() === 'ON') {
-	deleteLogs();
+	clearLog();
 }
 
 const loaded = dbLoadFromDisk();
@@ -39,6 +46,12 @@ try {
 	await app.listen({ port: Number(env.SERVER_PORT), host: '0.0.0.0' });
 	console.log('\n*****************************************************');
 	console.log(`SERVER UP AND RUNNING ON LOCALHOST:${env.SERVER_PORT}`);
+	const chaos = getChaosConfig();
+	if (chaos.enabled) {
+		console.log(
+			`CHAOS ON: 1 IN ${chaos.frequency} CALLS (${chaos.mode.toUpperCase()}) FAILS WITH A ${chaos.status}`,
+		);
+	}
 	console.log('*****************************************************');
 
 	process.on('SIGINT', () => {

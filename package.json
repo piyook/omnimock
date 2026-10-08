@@ -1,28 +1,34 @@
 {
 	"type": "module",
-	"version": "3.0.11",
+	"version": "4.0.0",
 	"name": "mock-api-server",
 	"description": "A mock API server for development and testing purposes.",
 	"author": "piyook",
 	"scripts": {
-		"dev": "tsx watch ./src/server.ts",
+		"postinstall": "node scripts/postinstall.mjs",
+		"dev": "(npm run compile-ui || echo Dashboard build failed - starting the server without it) && npm run dev:server",
+		"dev:server": "tsx watch ./src/server.ts",
+		"ui-dev": "npm --prefix ui run dev",
+		"compile-ui": "npm --prefix ui run build",
 		"start": "docker compose up -d",
 		"stop": "docker compose down --volumes",
 		"rebuild": "docker compose down --volumes && docker compose up -d --force-recreate --build",
 		"restart": "npm stop && npm start",
 		"torch": "torch-it",
 		"prepare": "husky || true",
-		"lint": "oxlint",
-		"lint-fix": "oxlint --fix",
-		"pretty": "prettier 'src/**/*.{js,jsx,ts,tsx,css,scss,md}' --check",
-		"pretty-fix": "prettier 'src/**/*.{js,jsx,ts,tsx,css,scss,md}' --write",
-		"test:e2e": "start-server-and-test dev tcp:8000 cypress:run",
+		"lint": "biome check",
+		"lint:fix": "biome check --write",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"test:e2e": "npm run compile-ui && node scripts/run-e2e.mjs",
 		"cypress:open": "cypress open",
 		"cypress:run": "cypress run --e2e",
-		"validate-branch-name": "bash validate-branch-name.sh",
-		"mcp:build": "tsc ./src/mcp/server.ts --target esnext --moduleResolution nodenext --module nodenext",
+		"validate-branch-name": "node scripts/validate-branch-name.mjs",
+		"mcp:build": "tsc ./src/mcp/server.ts --ignoreConfig --target esnext --moduleResolution nodenext --module nodenext",
 		"mcp:debug": "npx @modelcontextprotocol/inspector node ./src/mcp/server.js",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit && npm --prefix ui run check",
+		"audit": "npm audit --omit=dev && npm --prefix ui audit --omit=dev"
 	},
 	"dependencies": {
 		"@faker-js/faker": "^10.6.0",
@@ -34,28 +40,23 @@
 		"fastify": "^5.12.5",
 		"highlight.js": "^11.12.0",
 		"markdown-it": "^15.0.2",
-		"pretty-print-json": "^3.0.8",
 		"sharp": "^0.35.5",
 		"tsx": "^4.23.15",
 		"typescript": "^7.0.2",
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.5.15",
 		"@commitlint/cli": "^21.2.3",
 		"@commitlint/config-conventional": "^21.2.3",
 		"@types/aws-lambda": "^8.10.164",
 		"@types/node": "^24.19.1",
+		"@vitest/coverage-v8": "^5.0.3",
 		"cypress": "^16.1.1",
+		"fallow": "3.31.0",
 		"husky": "^9.1.7",
-		"lint-staged": "^17.6.0",
-		"oxlint": "^1.87.0",
-		"prettier": "3.9.9",
-		"start-server-and-test": "^3.0.13",
-		"torch-it": "^2.6.2"
-	},
-	"lint-staged": {
-		"src/**/*.{js,jsx,ts,tsx}": "oxlint",
-		"src/**/*.{js,jsx,ts,tsx,css,scss,md}": "npx prettier --check"
+		"torch-it": "^2.6.2",
+		"vitest": "^5.0.3"
 	},
 	"commitlint": {
 		"extends": [
