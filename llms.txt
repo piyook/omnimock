@@ -88,7 +88,7 @@ Never under the prefix, never failed by chaos: `GET /` (dashboard), `GET /api` (
 - **The dashboard reads only `/ui-meta` and `/ui-request-log`.** To show something new, add it to the reply in `src/utilities/server-page.ts`, to the `UiMeta` type in `ui/src/api.ts`, and to its unit test in `src/tests/utilities/server-page.test.ts`.
 - **`ui/dist` is build output** and is not committed. Run `npm run compile-ui` after changing `ui/src`.
 - **Imports in `src` usually end in `.js`** (for example `'./utilities/env.js'`) although the files are `.ts`. Follow the file you are editing.
-- **The MCP server in `src/mcp` is separate** from the mock server and experimental. `src/mcp/server.js` is build output.
+- **The MCP server in `src/mcp` is separate** from the mock server and experimental. `npm run mcp:build` writes a `.js` file beside each `.ts` file there; those are build output and not committed. It talks over stdout, so use `console.error`, never `console.log`, in `src/mcp`. Its unit tests are in `src/tests/mcp`.
 - **Do not edit by hand:** `ui/dist`, `coverage`, `.mock-data`, `src/logs/*.json`, `package-lock.json` files.
 
 ## Conventions

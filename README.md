@@ -446,10 +446,25 @@ An MCP server in `src/mcp` lets an LLM agent manage the mock server. It runs the
    npm run mcp:build
    ```
 
-2. Point your agent's MCP configuration at the built file:
+   This writes a `.js` file beside each `.ts` file in `src/mcp`. They are build output and are not committed. Run it again after changing anything in `src/mcp`.
+
+2. Point your agent's MCP configuration at the built file, to be run with `node`:
 
    ```
    <path_to_project>/src/mcp/server.js
+   ```
+
+   For example, in a client that takes a JSON configuration:
+
+   ```json
+   {
+     "mcpServers": {
+       "omnimock": {
+         "command": "node",
+         "args": ["<path_to_project>/src/mcp/server.js"]
+       }
+     }
+   }
    ```
 
 It offers three tools:
@@ -457,8 +472,16 @@ It offers three tools:
 | Tool | Does |
 | --- | --- |
 | `manage_local_mock_api_server` | Lists the endpoints, and starts, stops or rebuilds the server |
-| `create_new_api_endpoint` | Adds an endpoint in `src/api` from code the agent writes |
-| `create_new_media_endpoint` | Saves an image or video (from a URL, a file path or base64) to be served by the `images` or `videos` endpoint |
+| `create_new_api_endpoint` | Adds an endpoint in `src/api` from code the agent writes, based on `templates/handlers/api.custom.template.ts` |
+| `create_new_media_endpoint` | Saves an image (as a 1000 x 1000 `png`) or a video (`mp4`), from a URL, a file path or base64, to be served by the `images` or `videos` endpoint |
+
+Things to know:
+
+- **Rebuild after adding.** The Docker image holds a copy of the project, so a new endpoint or media file is only served after the `rebuild` action. A rebuild takes a few minutes, and an agent with a short tool timeout may stop waiting before it ends.
+- **A broken endpoint stops the server.** If the code an agent writes fails to load, the mock server does not start. Fix or delete the folder in `src/api` and rebuild.
+- **Names** of endpoints and media files can hold letters, numbers, hyphens and underscores only.
+- **Nothing is overwritten.** A tool refuses a name that already exists.
+- **Stop** removes the container, as `npm stop` does.
 
 ![mcp-1](images/mcp-1.png)
 
@@ -477,7 +500,7 @@ npm run mcp:debug
 Known issues:
 
 - **Node version managers on Windows**: with NVM or FNM the agent may not find `node`. Give the full path to the node binary, or add the fnm aliases directory to the system PATH.
-- **Another port**: the MCP server assumes port 8000. If you change `SERVER_PORT`, change `PORT` in `src/mcp/server.ts` to match and run `npm run mcp:build` again.
+- **Another port or prefix**: the MCP server reads `SERVER_PORT` and `USE_API_URL_PREFIX` from `.env` when it starts, so restart it in your agent after changing them. `docker-compose.yml` publishes port 8000 only; change it there too.
 
 Please report problems with it at https://github.com/piyook/omnimock/issues.
 

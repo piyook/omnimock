@@ -1,67 +1,70 @@
-import { spawnSync } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { port, projectRoot, type ToolResult } from './project.js';
 
 type Mode = 'start' | 'stop' | 'rebuild';
 
-const runCommand = (command: string) => {
-	const result = spawnSync(command, { shell: true, encoding: 'utf8' });
-	const error =
-		result.error?.message ??
-		(result.status === 0
-			? null
-			: result.stderr || `Exited with code ${result.status}`);
+// Runs one `docker compose` command and gives back what it printed
+type Compose = (args: string[]) => Promise<string>;
 
-	return { stdout: result.stdout ?? '', error };
+const down = ['down', '--remove-orphans', '--volumes', '--timeout', '10'];
+
+const steps: Record<Mode, string[][]> = {
+	start: [['up', '-d']],
+	stop: [down],
+	rebuild: [down, ['up', '-d', '--build', '--force-recreate']],
 };
 
-const isDockerProcessRunning = () => {
-	return !!runCommand(`docker ps -q --filter "name=mock-api-framework"`)
-		.stdout;
+const done: Record<Mode, string> = {
+	start: 'started',
+	stop: 'stopped',
+	rebuild: 'rebuilt',
 };
-const manageServer = (command: string, mode: Mode, PORT: number) => {
-	const { error } = runCommand(command);
 
-	if (error) {
-		return `Error running ${command}. Failed to ${mode} the local mock API server. ${error}. Current working directory: ${process.cwd()}`;
+// Run from the project root, where docker-compose.yml is. Not spawnSync: a
+// rebuild takes minutes, and the MCP server has to keep answering meanwhile.
+const compose: Compose = async (args) => {
+	const { stdout } = await promisify(execFile)(
+		'docker',
+		['compose', ...args],
+		{ cwd: projectRoot, maxBuffer: 64 * 1024 * 1024 },
+	);
+	return stdout;
+};
+
+// Asks compose for this project's containers, whatever they are named
+const isRunning = async (run: Compose) => {
+	const ids = await run(['ps', '-q', '--status', 'running']);
+	return ids.trim() !== '';
+};
+
+const manageServer = async (
+	mode: Mode,
+	run: Compose = compose,
+): Promise<ToolResult> => {
+	try {
+		for (const args of steps[mode]) {
+			await run(args);
+		}
+
+		const shouldBeRunning = mode !== 'stop';
+		if ((await isRunning(run)) !== shouldBeRunning) {
+			return {
+				ok: false,
+				message: `Error: Local mock API server has not been ${done[mode]} on port ${port}.`,
+			};
+		}
+	} catch (error) {
+		return {
+			ok: false,
+			message: `Failed to ${mode} the local mock API server. ${error instanceof Error ? error.message : 'Unknown error'}`,
+		};
 	}
 
-	if ((mode === 'start' || mode === 'rebuild') && !isDockerProcessRunning()) {
-		return `Error: Local mock API server has not been started on port ${PORT}.`;
-	}
-
-	if (mode === 'stop' && isDockerProcessRunning()) {
-		return `Error: Local mock API server has not been stopped on port ${PORT}.`;
-	}
-
-	return `Local mock API server has been ${mode}ed successfully on port ${PORT}`;
+	return {
+		ok: true,
+		message: `Local mock API server has been ${done[mode]} successfully on port ${port}`,
+	};
 };
 
-const startMockServer = async (PORT: number) => {
-	return manageServer(
-		`cd "${__dirname}" && docker-compose up -d`,
-		'start',
-		PORT,
-	);
-};
-
-const stopMockServer = async (PORT: number) => {
-	return manageServer(
-		`cd "${__dirname}" && docker-compose down --remove-orphans --volumes --timeout 10`,
-		'stop',
-		PORT,
-	);
-};
-
-const rebuildMockServer = async (PORT: number) => {
-	return manageServer(
-		`cd "${__dirname}" && docker-compose down --remove-orphans --volumes --timeout 10 &&docker-compose up -d --build --force-recreate`,
-		'rebuild',
-		PORT,
-	);
-};
-
-export { rebuildMockServer, startMockServer, stopMockServer };
+export { manageServer };
