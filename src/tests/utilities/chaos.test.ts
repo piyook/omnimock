@@ -109,7 +109,7 @@ describe('isChaosTarget', () => {
 		['/api/error', false],
 		['/api', false],
 		['/', false],
-		['/logs', false],
+		['/ui-meta', false],
 	])('%s -> %s', (url, expected) => {
 		expect(isChaosTarget(url)).toBe(expected);
 	});
