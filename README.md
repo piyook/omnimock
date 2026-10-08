@@ -65,7 +65,7 @@ Built with **Fastify** and TypeScript, this framework can run directly on your l
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - Docker
 
 ### Installation & Setup
