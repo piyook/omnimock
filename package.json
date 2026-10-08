@@ -12,14 +12,12 @@
 		"restart": "npm stop && npm start",
 		"torch": "torch-it",
 		"prepare": "husky || true",
-		"lint": "oxlint",
-		"lint-fix": "oxlint --fix",
-		"pretty": "prettier 'src/**/*.{js,jsx,ts,tsx,css,scss,md}' --check",
-		"pretty-fix": "prettier 'src/**/*.{js,jsx,ts,tsx,css,scss,md}' --write",
+		"lint": "biome check",
+		"lint:fix": "biome check --write",
 		"test:e2e": "start-server-and-test dev tcp:8000 cypress:run",
 		"cypress:open": "cypress open",
 		"cypress:run": "cypress run --e2e",
-		"validate-branch-name": "bash validate-branch-name.sh",
+		"validate-branch-name": "node scripts/validate-branch-name.mjs",
 		"mcp:build": "tsc ./src/mcp/server.ts --target esnext --moduleResolution nodenext --module nodenext",
 		"mcp:debug": "npx @modelcontextprotocol/inspector node ./src/mcp/server.js",
 		"typecheck": "tsc --noEmit"
@@ -41,21 +39,16 @@
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.5.15",
 		"@commitlint/cli": "^21.2.3",
 		"@commitlint/config-conventional": "^21.2.3",
 		"@types/aws-lambda": "^8.10.164",
 		"@types/node": "^24.19.1",
 		"cypress": "^16.1.1",
+		"fallow": "3.31.0",
 		"husky": "^9.1.7",
-		"lint-staged": "^17.6.0",
-		"oxlint": "^1.87.0",
-		"prettier": "3.9.9",
 		"start-server-and-test": "^3.0.13",
 		"torch-it": "^2.6.2"
-	},
-	"lint-staged": {
-		"src/**/*.{js,jsx,ts,tsx}": "oxlint",
-		"src/**/*.{js,jsx,ts,tsx,css,scss,md}": "npx prettier --check"
 	},
 	"commitlint": {
 		"extends": [
