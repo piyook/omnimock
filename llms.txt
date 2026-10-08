@@ -71,6 +71,7 @@ All in `.env`, read at start-up. `PROJECT_NAME`, `SERVER_PORT` and `USE_API_URL_
 - `USE_API_URL_PREFIX` (default `api`): the path all endpoints sit under. `prefix` from `src/utilities/env.ts` is that value with a trailing slash, or an empty string.
 - `LOG_REQUESTS`, `DELETE_LOGS_ON_SERVER_RESTART`, `MAX_LOGGED_REQUESTS` (1 to 100, default 10).
 - `CHAOS_ENABLED`, `CHAOS_FREQUENCY` (default 5), `CHAOS_MODE` (`every` or `random`), `CHAOS_STATUS` (400 to 599, default 500).
+- `UI_THEME` (`dark` or `light`, default `dark`): the dashboard's colours. The server writes it to `data-theme` on the page's `<html>` tag; the colours for each are in `ui/src/styles.css`.
 - `MOCK_DB_PERSIST`, `MOCK_DB_PERSIST_PATH`, `MOCK_DB_SEED_ON_START`.
 
 On/off settings are the strings `ON` and `OFF`.

@@ -44,6 +44,11 @@ describe('Dashboard contains expected information', () => {
 		cy.get('[cy-data="chaos_frequency"]').should('not.exist');
 	});
 
+	it('uses the dark theme', () => {
+		cy.visit('/');
+		cy.get('html').should('have.attr', 'data-theme', 'dark');
+	});
+
 	it('answers the status check', () => {
 		cy.request('/ping')
 			.its('body')

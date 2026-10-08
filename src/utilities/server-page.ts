@@ -75,9 +75,13 @@ const fallbackHtmlString = `
                 margin: 0;
                 padding: 0;
                 min-height: 100vh;
-                color: #F9F9F9;
+                color: #F4F2FB;
                 font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
-                background: linear-gradient(120deg, #20232a 0%, #23272F 70%, #0d1117 100%);
+                background: linear-gradient(120deg, #171425 0%, #13111C 70%, #0B0A12 100%);
+            }
+            [data-theme="light"] body {
+                color: #1E1A30;
+                background: linear-gradient(120deg, #F7F5FD 0%, #F2EFFA 70%, #E9E4F7 100%);
             }
             main {
                 padding: 56px 3vw 40px 3vw;
@@ -91,7 +95,8 @@ const fallbackHtmlString = `
                 letter-spacing: 1px;
             }
             .highlight {
-                background: rgb(144, 33, 2);
+                background: #A8433F;
+                color: #FFF;
                 padding: 4px 10px;
                 border-radius: 6px;
                 font-size: 1rem;
@@ -106,6 +111,19 @@ const fallbackHtmlString = `
     </body>
     </html>
     `;
+
+// The dashboard's colours, from UI_THEME: dark unless it is set to light
+function uiTheme(): 'dark' | 'light' {
+	return process.env?.UI_THEME?.toLowerCase() === 'light' ? 'light' : 'dark';
+}
+
+// Names the theme on the page's <html> tag, where its stylesheet looks for it
+function withTheme(html: string): string {
+	return html.replace(
+		'<html lang="en">',
+		`<html lang="en" data-theme="${uiTheme()}">`,
+	);
+}
 
 function serverPage(app: FastifyInstance, apiPaths: string[]) {
 	// What the compiled Svelte dashboard shows
@@ -171,9 +189,9 @@ function serverPage(app: FastifyInstance, apiPaths: string[]) {
 		if (uiIndex) {
 			return reply
 				.type(contentTypeForPath(uiIndex.absPath))
-				.send(uiIndex.data);
+				.send(withTheme(uiIndex.data.toString()));
 		}
-		return reply.type('text/html').send(fallbackHtmlString);
+		return reply.type('text/html').send(withTheme(fallbackHtmlString));
 	});
 
 	// Ping endpoint for status check
