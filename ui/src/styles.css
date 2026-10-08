@@ -1,12 +1,46 @@
+/* Dark is the default. The server sets data-theme on <html> from UI_THEME
+   in .env, so the page is painted in the right colours from the start. */
 :root {
-	--bg-main: #23272f;
-	--bg-card: #2d333b;
-	--accent: #4f8a8b;
-	--accent2: rgb(1, 25, 75);
-	--text-main: #f9f9f9;
-	--text-muted: #a7a9be;
+	color-scheme: dark;
+	--bg-page: linear-gradient(120deg, #171425 0%, #13111c 70%, #0b0a12 100%);
+	--bg-header: #171425;
+	--bg-card: #211d33;
+	--bg-inset: rgba(255, 255, 255, 0.05);
+	--bg-code: rgba(0, 0, 0, 0.3);
+	--bg-link: #2e2850;
+	--accent: #7c5ce6;
+	--on-accent: #fff;
+	--badge: #f2a93b;
+	--on-badge: #2a1c00;
+	--ok: #1f8a5b;
+	--danger: #a8433f;
+	--danger-border: #d0655f;
+	--divider: rgba(255, 255, 255, 0.12);
+	--backdrop: rgba(0, 0, 0, 0.6);
+	--text-main: #f4f2fb;
+	--text-muted: #aaa5c3;
 	--border-radius: 14px;
-	--shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+	--shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="light"] {
+	color-scheme: light;
+	--bg-page: linear-gradient(120deg, #f7f5fd 0%, #f2effa 70%, #e9e4f7 100%);
+	--bg-header: #f7f5fd;
+	--bg-card: #fff;
+	--bg-inset: rgba(60, 40, 140, 0.06);
+	--bg-code: rgba(60, 40, 140, 0.07);
+	--bg-link: #ece7fb;
+	--accent: #6541d6;
+	--badge: #f6c263;
+	--on-badge: #3a2800;
+	--danger: #b94a45;
+	--danger-border: #b94a45;
+	--divider: rgba(30, 20, 80, 0.12);
+	--backdrop: rgba(30, 20, 60, 0.45);
+	--text-main: #1e1a30;
+	--text-muted: #625c7c;
+	--shadow: 0 4px 20px rgba(40, 30, 90, 0.12);
 }
 
 html,
@@ -16,7 +50,7 @@ body {
 	min-height: 100vh;
 	color: var(--text-main);
 	font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
-	background: linear-gradient(120deg, #20232a 0%, #23272f 70%, #0d1117 100%);
+	background: var(--bg-page);
 }
 
 main {
@@ -42,7 +76,7 @@ main {
 	z-index: 1;
 	padding: 16px 0 12px 0;
 	margin-bottom: -12px;
-	background: #20232a;
+	background: var(--bg-header);
 }
 
 .card {
@@ -104,14 +138,15 @@ h1 {
 	padding: 8px 12px;
 	font-weight: 700;
 	letter-spacing: 0.3px;
+	color: var(--on-accent);
 }
 
 .statusOnline {
-	background: var(--accent);
+	background: var(--ok);
 }
 
 .statusOffline {
-	background: rgb(126, 80, 78);
+	background: var(--danger);
 }
 
 .grid {
@@ -137,14 +172,14 @@ h1 {
 	align-items: center;
 	padding: 10px 12px;
 	border-radius: 12px;
-	background: rgba(255, 255, 255, 0.04);
+	background: var(--bg-inset);
 }
 
 .badge {
-	background: var(--accent2);
+	background: var(--badge);
 	padding: 4px 10px;
 	border-radius: 8px;
-	color: #fff;
+	color: var(--on-badge);
 	font-weight: 800;
 	overflow-wrap: anywhere;
 }
@@ -157,19 +192,20 @@ h1 {
 
 .endpointLink {
 	display: block;
-	background: #5b8ca6;
-	color: #fff;
+	background: var(--bg-link);
+	color: var(--text-main);
 	text-decoration: none;
 	padding: 12px 0;
 	border-radius: 10px;
 	font-weight: 650;
-	border: 1.5px solid #446a7c;
+	border: 1.5px solid var(--accent);
 	text-align: center;
 }
 
 .endpointLink:hover,
 .endpointLink:focus {
-	background: #22496a;
+	background: var(--accent);
+	color: var(--on-accent);
 	outline: none;
 }
 
@@ -198,6 +234,7 @@ h1 {
 .fileLink:hover,
 .fileLink:focus-visible {
 	background: var(--accent);
+	color: var(--on-accent);
 	outline: none;
 }
 
@@ -239,7 +276,7 @@ h1 {
 }
 
 .viewer::backdrop {
-	background: rgba(0, 0, 0, 0.6);
+	background: var(--backdrop);
 }
 
 .viewerBody {
@@ -284,7 +321,7 @@ h1 {
 	margin: 0;
 	padding: 10px 12px;
 	border-radius: 12px;
-	background: rgba(0, 0, 0, 0.25);
+	background: var(--bg-code);
 	font-family: Consolas, "Courier New", monospace;
 	font-size: 0.9rem;
 	white-space: pre-wrap;
@@ -295,15 +332,16 @@ h1 {
 	opacity: 0.4;
 	cursor: default;
 	background: none;
+	color: var(--text-main);
 }
 
 .fileLink.danger {
-	border-color: rgb(190, 90, 86);
+	border-color: var(--danger-border);
 }
 
 .fileLink.danger:hover,
 .fileLink.danger:focus-visible {
-	background: rgb(126, 80, 78);
+	background: var(--danger);
 }
 
 /* Stays in view while a long request scrolls behind it */
@@ -317,7 +355,7 @@ h1 {
 	gap: 10px;
 	margin: 14px -18px -18px;
 	padding: 12px 18px;
-	border-top: 1px solid rgba(255, 255, 255, 0.12);
+	border-top: 1px solid var(--divider);
 	background: var(--bg-card);
 }
 
@@ -332,7 +370,8 @@ h1 {
 	margin: 0;
 	padding: 10px 12px;
 	border-radius: 12px;
-	background: rgb(126, 80, 78);
+	background: var(--danger);
+	color: var(--on-accent);
 	overflow-wrap: anywhere;
 }
 

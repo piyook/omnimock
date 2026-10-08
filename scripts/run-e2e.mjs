@@ -12,6 +12,7 @@ const baseEnv = {
 	CHAOS_FREQUENCY: '5',
 	CHAOS_MODE: 'every',
 	CHAOS_STATUS: '500',
+	UI_THEME: 'dark',
 };
 
 // Each suite gets its own server, started with the suite's env over the base

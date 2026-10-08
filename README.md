@@ -112,6 +112,7 @@ Settings live in `.env`. Restart the server after changing one (in Docker, `npm 
 | `CHAOS_FREQUENCY` | `5` | Fail 1 in this many calls (1 = every call) |
 | `CHAOS_MODE` | `every` | `every` (each Nth call) or `random` (a 1 in N chance per call) |
 | `CHAOS_STATUS` | `500` | HTTP status of the injected error, 400 to 599 |
+| `UI_THEME` | `dark` | Colours of the dashboard: `dark` or `light` |
 | `MOCK_DB_PERSIST` | not set (off) | `ON` saves the mock database to disk and loads it at start |
 | `MOCK_DB_PERSIST_PATH` | `.mock-data/mock-db.json` | Where the database is saved |
 | `MOCK_DB_SEED_ON_START` | not set (off) | `ON` runs the seeders at every start, even when a saved database was loaded |
