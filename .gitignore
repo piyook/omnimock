@@ -6,3 +6,4 @@ cypress/videos/
 coverage/
 ui/dist/
 src/logs/*.json
+src/mcp/**/*.js
