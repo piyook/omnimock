@@ -2,6 +2,8 @@ FROM node:24.18.0-alpine
 ENV NODE_ENV=development
 WORKDIR /usr/src/app
 COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
+# The install runs this; with no ui folder yet, it leaves the dashboard alone
+COPY scripts/postinstall.mjs ./scripts/
 
 # note this can be started in production mode with --production flag, so any dev dependencies will not be installed
 RUN npm install --silent && mv node_modules ../
