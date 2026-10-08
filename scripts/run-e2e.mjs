@@ -1,8 +1,19 @@
 import { spawn } from 'node:child_process';
 
-// Each suite gets its own server, started with the suite's env on top of .env,
-// and runs its specs against it.
-const suites = [{ name: 'default', env: {}, spec: 'cypress/e2e/*.cy.ts' }];
+// Each suite gets its own server, started with the suite's env in place of
+// what .env sets, and runs its specs against it. cypress.config.ts picks the
+// specs from the suite's name.
+const suites = [
+	{ name: 'default', env: {} },
+	{
+		name: 'chaos',
+		env: {
+			CHAOS_ENABLED: 'ON',
+			CHAOS_FREQUENCY: '2',
+			CHAOS_STATUS: '503',
+		},
+	},
+];
 
 const port = 8000;
 const url = `http://localhost:${port}/`;
@@ -67,10 +78,11 @@ const stopServer = async (proc) => {
 };
 
 // Runs asynchronously so the server's piped output keeps being drained
-const cypress = (spec) => {
+const cypress = (suite) => {
 	return new Promise((resolve, reject) => {
-		const proc = spawn(`npx cypress run --e2e --spec "${spec}"`, {
+		const proc = spawn('npx cypress run --e2e', {
 			stdio: childStdio,
+			env: { ...process.env, E2E_SUITE: suite },
 			shell: true,
 			windowsHide: true,
 		});
@@ -109,7 +121,7 @@ if (await isUp()) {
 let failedSuites = 0;
 let totalTests = 0;
 
-for (const { name, env, spec } of suites) {
+for (const { name, env } of suites) {
 	let cypressOutput = '';
 	let error = null;
 
@@ -117,7 +129,7 @@ for (const { name, env, spec } of suites) {
 	try {
 		currentProc = startServer(env);
 		await waitFor(true);
-		const result = await cypress(spec);
+		const result = await cypress(name);
 		cypressOutput = result.output;
 		if (result.code !== 0) {
 			throw new Error(`Cypress exited with code ${result.code}`);

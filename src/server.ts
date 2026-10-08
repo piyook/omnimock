@@ -3,6 +3,11 @@ import fastify from 'fastify';
 import { dbFlushToDisk, dbLoadFromDisk } from './models/db.js';
 import * as seeders from './seeders/index.js';
 import { apiList } from './utilities/api-list.js';
+import {
+	getChaosConfig,
+	registerChaos,
+	setChaosRoutes,
+} from './utilities/chaos.js';
 import { env } from './utilities/env.js';
 import getApiRoutes from './utilities/file-scan.js';
 import logPage from './utilities/log-page.js';
@@ -11,7 +16,11 @@ import serverPage from './utilities/server-page.js';
 
 const app = fastify();
 
+// Before the routes, so that its hook covers them
+registerChaos(app);
+
 const { apiRoutes } = await getApiRoutes(app);
+setChaosRoutes(apiRoutes);
 
 serverPage(app, apiRoutes);
 logPage(app);
@@ -39,6 +48,12 @@ try {
 	await app.listen({ port: Number(env.SERVER_PORT), host: '0.0.0.0' });
 	console.log('\n*****************************************************');
 	console.log(`SERVER UP AND RUNNING ON LOCALHOST:${env.SERVER_PORT}`);
+	const chaos = getChaosConfig();
+	if (chaos.enabled) {
+		console.log(
+			`CHAOS ON: 1 IN ${chaos.frequency} CALLS (${chaos.mode.toUpperCase()}) FAILS WITH A ${chaos.status}`,
+		);
+	}
 	console.log('*****************************************************');
 
 	process.on('SIGINT', () => {
