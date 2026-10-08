@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,4 +64,4 @@ const rebuildMockServer = async (PORT: number) => {
 	);
 };
 
-export { startMockServer, stopMockServer, rebuildMockServer };
+export { rebuildMockServer, startMockServer, stopMockServer };

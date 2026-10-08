@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import markdownit from 'markdown-it';
 import hljs from 'highlight.js';
+import markdownit from 'markdown-it';
 
 // Add any http handler here (get, push , delete etc., and middleware as needed)
 

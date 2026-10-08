@@ -1,13 +1,13 @@
 import 'dotenv/config';
 import fastify from 'fastify';
-import * as seeders from './seeders/index.js';
 import { dbFlushToDisk, dbLoadFromDisk } from './models/db.js';
-import getApiRoutes from './utilities/file-scan.js';
-import serverPage from './utilities/server-page.js';
-import logPage from './utilities/log-page.js';
-import { deleteLogs } from './utilities/logger.js';
+import * as seeders from './seeders/index.js';
 import { apiList } from './utilities/api-list.js';
 import { env } from './utilities/env.js';
+import getApiRoutes from './utilities/file-scan.js';
+import logPage from './utilities/log-page.js';
+import { deleteLogs } from './utilities/logger.js';
+import serverPage from './utilities/server-page.js';
 
 const app = fastify();
 

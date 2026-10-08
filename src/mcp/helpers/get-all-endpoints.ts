@@ -1,5 +1,5 @@
 const getApiEndpoints = async (port: number) => {
-	let response;
+	let response: Response;
 	try {
 		response = await fetch(`http://localhost:${port}`);
 		if (!response.ok) {
