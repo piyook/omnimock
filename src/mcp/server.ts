@@ -1,18 +1,17 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { getApiEndpoints } from './helpers/get-all-endpoints.js';
-import { addApiEndpoint } from './helpers/add-api-endpoint.js';
 import { apiHandlerExample } from './data/api-handler-example.js';
+import { addApiEndpoint } from './helpers/add-api-endpoint.js';
 import { addMediaEndpoint } from './helpers/add-media-endpoint.js';
 import {
+	rebuildMockServer,
 	startMockServer,
 	stopMockServer,
-	rebuildMockServer,
 } from './helpers/control-mock-server.js';
-import path from 'path';
-
-import { fileURLToPath } from 'node:url';
+import { getApiEndpoints } from './helpers/get-all-endpoints.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,7 +57,7 @@ server.tool(
 					],
 				};
 
-			case 'add_endpoint':
+			case 'add_endpoint': {
 				// Handle the 'add' action to add a new API endpoint
 				if (!name || !description || !code) {
 					return {
@@ -79,6 +78,7 @@ server.tool(
 						},
 					],
 				};
+			}
 
 			default:
 				return {

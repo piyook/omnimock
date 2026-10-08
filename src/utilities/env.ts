@@ -10,5 +10,5 @@ const envSchema = z.object({
 export const env = envSchema.parse(process.env);
 
 export const prefix = env?.USE_API_URL_PREFIX
-	? env.USE_API_URL_PREFIX + '/'
+	? `${env.USE_API_URL_PREFIX}/`
 	: '';

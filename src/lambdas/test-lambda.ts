@@ -1,7 +1,4 @@
-import {
-	type APIGatewayProxyEvent,
-	type APIGatewayProxyResult,
-} from 'aws-lambda';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 type RequestBody = {
 	userQuestion: string | undefined;

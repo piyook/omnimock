@@ -2,6 +2,7 @@
 // Copy and save as api.ts in the api path folder in your project
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+
 // import { db } from '../../src/models/db.js'; // Uncomment this line if you have a db model to use
 // import logger from '../../src/utilities/logger.js'; // Import your logger utility if needed
 

@@ -103,7 +103,10 @@ function registerPostRoutes(app: FastifyInstance, pathName: string) {
 	app.put(
 		`/${pathName}/:postID`,
 		async (
-			request: FastifyRequest<{ Params: PostParams; Body: UpdatePostBody }>,
+			request: FastifyRequest<{
+				Params: PostParams;
+				Body: UpdatePostBody;
+			}>,
 			reply: FastifyReply,
 		) => {
 			const { postID } = request.params;
