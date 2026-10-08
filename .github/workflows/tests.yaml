@@ -64,6 +64,10 @@ jobs:
                   node-version-file: .nvmrc
                   cache: npm
             - run: npm ci
+            # The tests go first, as in the pre-push hook: fallow scores
+            # complexity from the coverage they write, and without it guesses
+            # low and fails a function the hook passed.
+            - run: npm run test:coverage
             - run: npx fallow audit --base origin/${{ github.base_ref }}
 
     branch_name:
@@ -76,24 +80,43 @@ jobs:
                   node-version-file: .nvmrc
             - run: npm run validate-branch-name
 
-    e2e-tests:
+    unit_tests:
         needs: [lint, typecheck, audit]
         # Run even if an upstream check fails, but not when the run is cancelled.
         if: ${{ !cancelled() }}
         runs-on: ubuntu-latest
         steps:
-            - name: Checkout
-              uses: actions/checkout@v6
-            - name: Setup Node
-              uses: actions/setup-node@v6
+            - uses: actions/checkout@v6
+            - uses: actions/setup-node@v6
               with:
                   node-version-file: .nvmrc
                   cache: npm
-            - name: Cypress run
-              uses: cypress-io/github-action@v7
+            - run: npm ci
+            - run: npm run test:coverage
+
+    e2e_tests:
+        needs: [lint, typecheck, audit]
+        if: ${{ !cancelled() }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - uses: actions/setup-node@v6
               with:
-                  start: |
-                      npm run dev
-                  wait-on: 'http://localhost:8000'
-                  wait-on-timeout: 60
-                  command: npm run cypress:run
+                  node-version-file: .nvmrc
+                  cache: npm
+
+            - name: Cache Cypress binary
+              uses: actions/cache@v5
+              with:
+                  path: ~/.cache/Cypress
+                  key: cypress-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+            - run: npm ci
+
+            - name: Verify Cypress
+              run: npx cypress verify
+
+            # Full server and Cypress output in the CI log (local runs print a summary)
+            - run: npm run test:e2e
+              env:
+                  E2E_VERBOSE: 'true'

@@ -19,6 +19,9 @@ else
 	base=origin/main
 fi
 npx biome ci
+# The tests go before fallow, which scores complexity from the coverage they
+# write. They fail below the minimum in vitest.config.mts.
+npm run test:coverage
 npx fallow audit --base "$base"
 npm run typecheck
 npm audit --omit=dev

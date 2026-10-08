@@ -26,6 +26,7 @@
 - [Advanced Features](#advanced-features)
   - [Custom Middleware](#custom-middleware)
   - [Error Testing](#error-testing)
+  - [Chaos Mode](#chaos-mode)
   - [CORS Configuration](#cors-configuration)
   - [AWS Lambda Development](#aws-lambda-development)
 - [Request Logging](#request-logging)
@@ -341,6 +342,31 @@ http://localhost:8000/api/error
 http://localhost:8000/api/error?status=500&message=Internal%20Server%20Error
 ```
 
+### Chaos Mode
+
+Chaos mode fails some calls to your mock endpoints with an HTTP error, so you can test how a frontend copes with intermittent failures (retries, error states, backoff). Turn it on in `.env` and restart the server:
+
+```
+CHAOS_ENABLED=ON
+# Fail 1 in this many calls (1 = every call)
+CHAOS_FREQUENCY=5
+# every (each 5th call) or random (a 1 in 5 chance per call)
+CHAOS_MODE=every
+# HTTP status of the error (400 to 599)
+CHAOS_STATUS=503
+```
+
+A failing call gets the status you set, in place of the endpoint's own reply:
+
+```json
+{ "error": "503: omnimock chaos: simulated error" }
+```
+
+- The response carries an `x-omnimock-chaos: true` header, so a test can tell an injected error from a real one.
+- A 429 or 503 also carries `Retry-After: 1`.
+- Every endpoint in `src/api` is covered, whatever the method, with no change to its handler. The dashboard, the logs page, the `/api` endpoint list and the error endpoint are never failed and are not counted.
+- A setting that isn't valid falls back to its default: every call, `every` mode, status 500.
+
 ### CORS Configuration
 
 CORS is handled via the `@fastify/cors` plugin, which is registered globally. To customise allowed origins or methods, update the CORS config in `src/server.ts`:
@@ -416,6 +442,12 @@ SERVER_PORT=8000
 # Logging
 LOG_REQUESTS=ON
 DELETE_LOGS_ON_SERVER_RESTART=ON
+
+# Chaos mode (see Chaos Mode)
+CHAOS_ENABLED=OFF
+CHAOS_FREQUENCY=5
+CHAOS_MODE=every
+CHAOS_STATUS=500
 ```
 
 ### URL Structure Examples
@@ -488,7 +520,7 @@ npm run mcp:build
 1. **Development**: Use `npm run dev` for active development
 2. **Testing**: Use `npm start` for Docker-based testing
 3. **File Organisation**: Follow the established folder structure
-4. **Error Handling**: Test error scenarios using the error endpoint
+4. **Error Handling**: Test error scenarios using the error endpoint, and intermittent failures with chaos mode
 5. **Logging**: Enable logging during development for debugging
 
 ### Folder Structure
