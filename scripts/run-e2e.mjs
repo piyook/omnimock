@@ -1,8 +1,22 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
-// Each suite gets its own server, started with the suite's env in place of
-// what .env sets, and runs its specs against it. cypress.config.ts picks the
-// specs from the suite's name.
+// The settings the specs are written for. Every suite's server starts with
+// all of them set, so that what .env holds at the time (chaos left on, a
+// shorter log) can't change a result: dotenv leaves alone anything already in
+// the environment.
+const baseEnv = {
+	LOG_REQUESTS: 'ON',
+	DELETE_LOGS_ON_SERVER_RESTART: 'ON',
+	MAX_LOGGED_REQUESTS: '10',
+	CHAOS_ENABLED: 'OFF',
+	CHAOS_FREQUENCY: '5',
+	CHAOS_MODE: 'every',
+	CHAOS_STATUS: '500',
+};
+
+// Each suite gets its own server, started with the suite's env over the base
+// one, and runs its specs against it. cypress.config.ts picks the specs from
+// the suite's name.
 const suites = [
 	{ name: 'default', env: {} },
 	{
@@ -47,10 +61,25 @@ const isUp = async () => {
 	}
 };
 
-// Waits until the server answers (up = true) or stops answering (up = false)
-const waitFor = async (up, attempts = 30) => {
+// Whether a child process has ended, by exiting or by being killed (a killed
+// one has a signalCode and no exitCode)
+const hasEnded = (proc) => proc.exitCode !== null || proc.signalCode !== null;
+
+// Throws if the server's process has ended, so that a server that fails to
+// start is reported at once and not after every attempt to reach it
+const assertRunning = (proc) => {
+	if (!hasEnded(proc)) return;
+	throw new Error(
+		`Server ended before it answered on port ${port} (${proc.signalCode ?? `exit code ${proc.exitCode}`})`,
+	);
+};
+
+// Waits until the server answers (up = true) or stops answering (up = false).
+// `check` runs between attempts and can throw to stop the wait.
+const waitFor = async (up, check = () => {}, attempts = 30) => {
 	for (let i = 0; i < attempts; i++) {
 		if ((await isUp()) === up) return;
+		check();
 		await sleep(1000);
 	}
 	throw new Error(
@@ -63,7 +92,7 @@ const waitFor = async (up, attempts = 30) => {
 const startServer = (env) => {
 	const proc = spawn(process.execPath, ['--import', 'tsx', 'src/server.ts'], {
 		stdio: childStdio,
-		env: { ...process.env, ...env },
+		env: { ...process.env, ...baseEnv, ...env },
 		windowsHide: true,
 	});
 	proc.output = capture(proc);
@@ -71,10 +100,37 @@ const startServer = (env) => {
 };
 
 const stopServer = async (proc) => {
-	if (!proc || proc.exitCode !== null) return;
+	if (!proc || hasEnded(proc)) return;
 	const exited = new Promise((resolve) => proc.once('exit', resolve));
 	proc.kill();
 	await exited;
+};
+
+// Cypress is started through a shell and starts processes of its own, so
+// killing the one we hold would leave the rest running. On Windows taskkill
+// takes the whole tree; elsewhere Cypress is the leader of its own process
+// group (detached), and the group is signalled.
+const killTree = (pid) => {
+	if (process.platform === 'win32') {
+		spawnSync('taskkill', ['/pid', String(pid), '/T', '/F'], {
+			stdio: 'ignore',
+			windowsHide: true,
+		});
+	} else {
+		process.kill(-pid, 'SIGTERM');
+	}
+};
+
+// The Cypress run in progress, null between runs
+let cypressProc = null;
+
+const stopCypress = () => {
+	if (!cypressProc) return;
+	try {
+		killTree(cypressProc.pid);
+	} catch {
+		// It ended in the meantime
+	}
 };
 
 // Runs asynchronously so the server's piped output keeps being drained
@@ -85,11 +141,16 @@ const cypress = (suite) => {
 			env: { ...process.env, E2E_SUITE: suite },
 			shell: true,
 			windowsHide: true,
+			detached: process.platform !== 'win32',
 		});
+		cypressProc = proc;
 		const output = capture(proc);
 
 		proc.on('error', reject);
-		proc.on('close', (code) => resolve({ code, output: output() }));
+		proc.on('close', (code) => {
+			cypressProc = null;
+			resolve({ code, output: output() });
+		});
 	});
 };
 
@@ -104,6 +165,7 @@ const cypressCount = (output, label) => {
 let currentProc = null;
 for (const signal of ['SIGINT', 'SIGTERM']) {
 	process.on(signal, async () => {
+		stopCypress();
 		await stopServer(currentProc);
 		process.exit(1);
 	});
@@ -128,7 +190,8 @@ for (const { name, env } of suites) {
 	log(`\n=== Starting test suite: ${name} ===`);
 	try {
 		currentProc = startServer(env);
-		await waitFor(true);
+		const server = currentProc;
+		await waitFor(true, () => assertRunning(server));
 		const result = await cypress(name);
 		cypressOutput = result.output;
 		if (result.code !== 0) {
