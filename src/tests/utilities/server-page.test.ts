@@ -167,6 +167,29 @@ describe('the dashboard', () => {
 		expect(response.body).toContain("use 'npm run compile-ui'");
 	});
 
+	it('is dark unless UI_THEME asks for light', async () => {
+		files['ui/dist/index.html'] = '<html lang="en">dashboard</html>';
+		const app = buildApp();
+
+		const unset = await app.inject('/');
+		vi.stubEnv('UI_THEME', 'neon');
+		const unknown = await app.inject('/');
+		vi.stubEnv('UI_THEME', 'Light');
+		const light = await app.inject('/');
+
+		expect(unset.body).toContain('<html lang="en" data-theme="dark">');
+		expect(unknown.body).toContain('<html lang="en" data-theme="dark">');
+		expect(light.body).toContain('<html lang="en" data-theme="light">');
+	});
+
+	it('gives the page that says to build the theme too', async () => {
+		vi.stubEnv('UI_THEME', 'light');
+
+		const response = await buildApp().inject('/');
+
+		expect(response.body).toContain('<html lang="en" data-theme="light">');
+	});
+
 	it('serves built assets and root files with their content type', async () => {
 		files['ui/dist/assets/index.js'] = 'console.log(1)';
 		files['ui/dist/favicon.svg'] = '<svg/>';
