@@ -13,7 +13,7 @@ export interface ChaosSettings {
 	status: number;
 }
 
-const defaultChaosFrequency = 1;
+const defaultChaosFrequency = 5;
 const defaultChaosStatus = 500;
 
 // Statuses a client is expected to wait on before retrying
@@ -79,7 +79,8 @@ export function setChaosRoutes(apiRoutes: string[]): void {
 		.map((route) => `/${prefix}${route}`);
 }
 
-// Whether a request URL is for one of those routes or something below it
+// Whether a path is one of those routes or something below it. Takes a
+// request URL or the path a route was added with, e.g. /api/bikes/:id
 export function isChaosTarget(url: string): boolean {
 	const pathName = url.split('?')[0];
 
@@ -96,7 +97,12 @@ export function isChaosTarget(url: string): boolean {
  */
 export function registerChaos(app: FastifyInstance): void {
 	app.addHook('onRequest', async (request, reply) => {
-		if (!isChaosTarget(request.url) || !shouldInjectError()) return;
+		// The path of the route that will answer, in place of the URL as it
+		// was sent: a call that matches no route (a 404, a preflight) is
+		// neither failed nor counted, and an encoded URL is matched as the
+		// route it reaches
+		const route = request.is404 ? undefined : request.routeOptions.url;
+		if (!route || !isChaosTarget(route) || !shouldInjectError()) return;
 
 		const { status } = getChaosConfig();
 		reply.header('x-omnimock-chaos', 'true');

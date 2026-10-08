@@ -1,0 +1,120 @@
+# OmniMock
+
+> OmniMock is a mock API server for localhost, built with Fastify and TypeScript. Each folder in `src/api` is an endpoint. It has an in-memory mock database, file serving, an error endpoint, chaos mode (injected HTTP errors), a request log and a Svelte dashboard. This file is a guide for coding agents working in this repository; the full documentation for people is [README.md](README.md).
+
+Node 24 (see `.nvmrc`), ES modules, TypeScript run directly by `tsx` with no build step for the server. The server listens on port 8000 by default.
+
+## Commands
+
+- `npm install`: installs the server's dependencies and, through `scripts/postinstall.mjs`, the dashboard's in `ui/`.
+- `npm run dev`: builds the dashboard, then runs the server with `tsx watch` (restarts when a file in `src` changes). Use this while changing code.
+- `npm run dev:server`: the same without building the dashboard.
+- `npm start` / `npm stop` / `npm run rebuild`: the server in Docker. The image holds a copy of the code and `.env`, so a change needs `npm run rebuild`. `npm stop` and `npm run rebuild` remove the project's Docker volumes.
+- `npm run lint` (Biome), `npm run lint:fix`.
+- `npm run typecheck`: `tsc --noEmit` for the server and `svelte-check` for `ui/`.
+- `npm run test:coverage`: Vitest unit tests with coverage minimums.
+- `npm run test:e2e`: Cypress. Starts its own server on port 8000 and refuses to run if something is already answering there.
+- `npm run audit`: `npm audit` for both lockfiles.
+- `npx fallow audit --base origin/dev`: dead code and complexity of changed files. Run `npm run test:coverage` first; it reads the coverage report.
+
+Before saying a change is done, run lint, typecheck and `npm run test:coverage`. Run `npm run test:e2e` as well if you changed an endpoint, the dashboard, the logger or chaos. The pre-push hook runs all of them and blocks the push if one fails.
+
+## Adding an endpoint
+
+1. Create `src/api/<name>/api.ts`. The folder name is the path: `src/api/tasks` is served at `/api/tasks`.
+2. Default-export a function `(app: FastifyInstance, pathName: string) => void` that adds routes to `app`.
+3. `pathName` already includes the URL prefix (for example `api/tasks`), so write routes as `` `/${pathName}` `` and `` `/${pathName}/:id` ``. Do not hard-code `/api`.
+
+```typescript
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+
+function registerTaskRoutes(app: FastifyInstance, pathName: string) {
+	app.get(
+		`/${pathName}`,
+		async (_request: FastifyRequest, reply: FastifyReply) => {
+			reply.send({ tasks: [] });
+		},
+	);
+}
+
+export default registerTaskRoutes;
+```
+
+- Every folder in `src/api` must contain an `api.ts`, or the server stops at start-up.
+- Routes are found at start-up only (`src/utilities/file-scan.ts`). No registration list needs editing.
+- Start from `templates/handlers/api.custom.template.ts`, `api.rest.template.ts` or `api.media.template.ts`. Their imports are written for the `templates` folder and need correcting to `../../models/db.js` and `../../utilities/logger.js` once copied.
+- Working examples: `src/api/bikes` (GET, POST, logging), `src/api/users` and `src/api/posts` (full REST on the database), `src/api/images` (files), `src/api/lambda`.
+- Add a Cypress spec in `cypress/e2e` for a new endpoint.
+
+## Mock database
+
+`src/models/db.ts` is the only source of the database. It exports `db` with the models `cat`, `user` and `post`, each with:
+
+```typescript
+db.user.getAll();
+db.user.findFirst({ where: { id: { equals: id } } }); // null if none
+db.user.create({ title: 'x' }); // missing fields get Faker data
+db.user.update({ where: { id: { equals: id } }, data: { title: 'y' } }); // null if none
+db.user.delete({ where: { id: { equals: id } } }); // null if none
+```
+
+To add a model, edit `src/models/db.ts`: add its type, an entry in `db` using `createModel`, and the model to `PersistedDb`, `safeParsePersistedDb`, `dbDump` and `dbLoadFromDisk`. Then add a seeder in `src/seeders` and export it from `src/seeders/index.ts`; every export of that file runs at start-up.
+
+- `src/models/cat.ts`, `user.ts` and `post.ts` are not used by `db`. Changing them does not change the database.
+- Data is in memory and is recreated by the seeders at each start, unless `MOCK_DB_PERSIST=ON`, which saves to `.mock-data/mock-db.json` and loads from it in place of seeding.
+- `src/seeders/post-seeder.ts` seeds from `src/data/data.json`.
+
+## Settings
+
+All in `.env`, read at start-up. `PROJECT_NAME`, `SERVER_PORT` and `USE_API_URL_PREFIX` are required and checked with zod in `src/utilities/env.ts`. The rest are read where they are used, and a missing or invalid value falls back to a default.
+
+- `USE_API_URL_PREFIX` (default `api`): the path all endpoints sit under. `prefix` from `src/utilities/env.ts` is that value with a trailing slash, or an empty string.
+- `LOG_REQUESTS`, `DELETE_LOGS_ON_SERVER_RESTART`, `MAX_LOGGED_REQUESTS` (1 to 100, default 10).
+- `CHAOS_ENABLED`, `CHAOS_FREQUENCY` (default 5), `CHAOS_MODE` (`every` or `random`), `CHAOS_STATUS` (400 to 599, default 500).
+- `MOCK_DB_PERSIST`, `MOCK_DB_PERSIST_PATH`, `MOCK_DB_SEED_ON_START`.
+
+On/off settings are the strings `ON` and `OFF`.
+
+## Routes the server owns
+
+Never under the prefix, never failed by chaos: `GET /` (dashboard), `GET /api` (endpoint list as JSON, always at `/api`), `GET /ping`, `GET /ui-meta` (what the dashboard shows), `GET` and `DELETE /ui-request-log`, `GET /assets/*`. Do not name an endpoint folder so that it collides with one of these.
+
+## Things that are easy to get wrong
+
+- **Request logging is opt-in per handler.** A request is logged only if the handler calls `logger({ data, pathName, type })` from `src/utilities/logger.ts`.
+- **Chaos covers every folder in `src/api` except `error`**, through one `onRequest` hook in `src/utilities/chaos.ts`. A handler needs no change. Requests that match no route are not counted.
+- **No CORS plugin is installed.** The file endpoints set `Access-Control-Allow-Origin: *` themselves. The README section on CORS describes adding `@fastify/cors`.
+- **The dashboard is a separate package.** `ui/` has its own `package.json`, lockfile and `tsconfig.json`, and uses TypeScript 6 because `svelte-check` does not yet support TypeScript 7, which the server uses. Run its scripts with `npm --prefix ui run <script>`. The root `tsconfig.json` and Biome's linting of `.svelte` files both leave it out.
+- **The dashboard reads only `/ui-meta` and `/ui-request-log`.** To show something new, add it to the reply in `src/utilities/server-page.ts`, to the `UiMeta` type in `ui/src/api.ts`, and to its unit test in `src/tests/utilities/server-page.test.ts`.
+- **`ui/dist` is build output** and is not committed. Run `npm run compile-ui` after changing `ui/src`.
+- **Imports in `src` usually end in `.js`** (for example `'./utilities/env.js'`) although the files are `.ts`. Follow the file you are editing.
+- **The MCP server in `src/mcp` is separate** from the mock server and experimental. `src/mcp/server.js` is build output.
+- **Do not edit by hand:** `ui/dist`, `coverage`, `.mock-data`, `src/logs/*.json`, `package-lock.json` files.
+
+## Conventions
+
+- Formatting and linting are Biome's (`biome.json`): tabs, single quotes. Run `npm run lint:fix` instead of formatting by hand.
+- Unit tests live in `src/tests`, mirroring `src`, as `*.test.ts`. Coverage must stay at or above 90% statements, functions and lines and 85% branches over `src/models/db.ts` and `src/utilities/*.ts`, so new code in those needs tests.
+- Tests of settings use `vi.stubEnv`, and the logger's tests mock `node:fs` so that the real log file is never touched.
+- e2e specs are in `cypress/e2e`. Those in `cypress/e2e/chaos` run against a second server started with chaos on (`scripts/run-e2e.mjs`). Elements are selected by a `cy-data` attribute.
+- Commit messages follow Conventional Commits with an empty scope, as in `feat(): add tasks endpoint` (checked by commitlint).
+- Branch names: `feat/`, `fix/`, `hotfix/`, `release/` or `chore/` followed by a name. Pull requests target `dev`; `main` is the released version.
+- The version is in `package.json` and `package-lock.json`, and the dashboard shows it. Set it with `npm version <x.y.z> --no-git-tag-version`.
+
+## Where things are
+
+- [src/server.ts](src/server.ts): start-up order (chaos hook, endpoints, dashboard routes, database, listen).
+- [src/utilities/file-scan.ts](src/utilities/file-scan.ts): finds and loads the endpoints.
+- [src/utilities/server-page.ts](src/utilities/server-page.ts): the dashboard's routes and static files.
+- [src/utilities/chaos.ts](src/utilities/chaos.ts): chaos mode.
+- [src/utilities/logger.ts](src/utilities/logger.ts): the request log.
+- [src/utilities/env.ts](src/utilities/env.ts): required settings and the URL prefix.
+- [src/utilities/aws-apigw-convert.ts](src/utilities/aws-apigw-convert.ts): Fastify request to API Gateway event, for Lambda handlers.
+- [src/models/db.ts](src/models/db.ts): the mock database.
+- [ui/src/App.svelte](ui/src/App.svelte): the dashboard.
+- [scripts/run-e2e.mjs](scripts/run-e2e.mjs): the e2e runner and the settings each suite uses.
+- [.husky/pre-push](.husky/pre-push) and [.github/workflows/tests.yaml](.github/workflows/tests.yaml): the checks a change must pass.
+
+## Documentation
+
+- [README.md](README.md): setup, every setting, each feature with examples, and what changed in version 4.

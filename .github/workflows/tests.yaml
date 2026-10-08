@@ -50,7 +50,8 @@ jobs:
                   node-version-file: .nvmrc
                   cache: npm
             - run: npm ci
-            - run: npm audit --omit=dev
+            # The root package and the dashboard in ui/, each from its own lockfile
+            - run: npm run audit
 
     fallow:
         if: github.event_name == 'pull_request'

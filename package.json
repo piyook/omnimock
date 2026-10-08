@@ -1,12 +1,13 @@
 {
 	"type": "module",
-	"version": "3.1.0",
+	"version": "4.0.0",
 	"name": "mock-api-server",
 	"description": "A mock API server for development and testing purposes.",
 	"author": "piyook",
 	"scripts": {
 		"postinstall": "node scripts/postinstall.mjs",
-		"dev": "npm run compile-ui && tsx watch ./src/server.ts",
+		"dev": "(npm run compile-ui || echo Dashboard build failed - starting the server without it) && npm run dev:server",
+		"dev:server": "tsx watch ./src/server.ts",
 		"ui-dev": "npm --prefix ui run dev",
 		"compile-ui": "npm --prefix ui run build",
 		"start": "docker compose up -d",
@@ -26,7 +27,8 @@
 		"validate-branch-name": "node scripts/validate-branch-name.mjs",
 		"mcp:build": "tsc ./src/mcp/server.ts --target esnext --moduleResolution nodenext --module nodenext",
 		"mcp:debug": "npx @modelcontextprotocol/inspector node ./src/mcp/server.js",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit && npm --prefix ui run check",
+		"audit": "npm audit --omit=dev && npm --prefix ui audit --omit=dev"
 	},
 	"dependencies": {
 		"@faker-js/faker": "^10.6.0",

@@ -75,7 +75,7 @@ describe('/ui-meta', () => {
 			maxLoggedRequests: 10,
 			dbPersist: 'OFF',
 			chaosStatus: 'DISABLED',
-			chaosFrequency: 1,
+			chaosFrequency: 5,
 			chaosMode: 'every',
 			chaosErrorStatus: 500,
 			chaosInjected: 0,
