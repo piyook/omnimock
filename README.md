@@ -28,7 +28,7 @@ It is built with [Fastify](https://fastify.dev/) and TypeScript, and runs either
 - [Request logging](#request-logging)
 - [CORS](#cors)
 - [AWS Lambda functions](#aws-lambda-functions)
-- [MCP server (experimental)](#mcp-server-experimental)
+- [MCP server](#mcp-server)
 - [Working on OmniMock](#working-on-omnimock)
 - [Upgrading from v3](#upgrading-from-v3)
 - [Licence and resources](#licence-and-resources)
@@ -43,7 +43,7 @@ It is built with [Fastify](https://fastify.dev/) and TypeScript, and runs either
 - **Request log**: keeps the most recent requests and shows them in the dashboard.
 - **Dashboard**: one page showing the server settings, every endpoint, the chaos settings and the request log.
 - **AWS Lambda**: run a Lambda handler behind an endpoint, with the request converted to an API Gateway event.
-- **MCP server** (experimental): lets an LLM agent start, stop and add endpoints to the mock server.
+- **MCP server**: lets an LLM agent start, stop and add endpoints to the mock server.
 
 ## Quick start
 
@@ -436,7 +436,7 @@ curl -X POST http://localhost:8000/api/lambda \
 
 A handler developed here should behave the same when deployed, but check it with LocalStack or in a sandbox AWS account before relying on it.
 
-## MCP server (experimental)
+## MCP server
 
 An MCP server in `src/mcp` lets an LLM agent manage the mock server. It runs the server in Docker, so Docker must be running.
 
