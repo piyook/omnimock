@@ -41,7 +41,7 @@ It is built with [Fastify](https://fastify.dev/) and TypeScript, and runs either
 - **Error endpoint**: returns whichever HTTP error you ask for.
 - **Chaos mode**: fails some calls with an HTTP error, to test how a client copes with intermittent failures.
 - **Request log**: keeps the most recent requests and shows them in the dashboard.
-- **Dashboard**: one page showing the server settings, every endpoint, the chaos settings and the request log.
+- **Dashboard**: an overview of the server, every endpoint, the settings and the request log, in a dark or a light theme.
 - **AWS Lambda**: run a Lambda handler behind an endpoint, with the request converted to an API Gateway event.
 - **MCP server**: lets an LLM agent start, stop and add endpoints to the mock server.
 
@@ -112,7 +112,7 @@ Settings live in `.env`. Restart the server after changing one (in Docker, `npm 
 | `CHAOS_FREQUENCY` | `5` | Fail 1 in this many calls (1 = every call) |
 | `CHAOS_MODE` | `every` | `every` (each Nth call) or `random` (a 1 in N chance per call) |
 | `CHAOS_STATUS` | `500` | HTTP status of the injected error, 400 to 599 |
-| `UI_THEME` | `dark` | Colours of the dashboard: `dark` or `light` |
+| `UI_THEME` | `dark` | Colours of the dashboard, `dark` or `light`, until a browser picks its own with the switch in the sidebar |
 | `MOCK_DB_PERSIST` | not set (off) | `ON` saves the mock database to disk and loads it at start |
 | `MOCK_DB_PERSIST_PATH` | `.mock-data/mock-db.json` | Where the database is saved |
 | `MOCK_DB_SEED_ON_START` | not set (off) | `ON` runs the seeders at every start, even when a saved database was loaded |
@@ -134,14 +134,19 @@ Two things do not follow these settings:
 
 ## The dashboard
 
-The page at `/` shows:
+The dashboard at `/` has three pages, listed in its sidebar:
 
-- **Server**: version, whether the server is answering, port, URL prefix, project name and whether the database is being saved.
-- **API endpoints**: a link to each endpoint's GET reply.
-- **Chaos**: whether chaos mode is on, how often it fails a call, with which status, and how many errors it has injected.
-- **Request log**: the logging settings, and **View request log** to page through the logged requests.
+- **Overview**: the number of endpoints, chaos, the request log and the database at a glance, the base URL, and **View request log** to page through the logged requests.
+- **Endpoints** (`/#/endpoints`): a link to each endpoint's GET reply.
+- **Settings** (`/#/settings`): the server's port, URL prefix, project name and whether the database is being saved; whether chaos mode is on, how often it fails a call, with which status, and how many errors it has injected; and the logging settings.
 
-It refreshes every two seconds. It is a Svelte app in `ui/`, built into `ui/dist` and served by the mock server.
+![The settings page of the dashboard](images/dashboard-settings.png)
+
+The header of every page shows the version and whether the server is answering.
+
+The **Dark theme** switch at the foot of the sidebar changes between the dark and the light colours. The choice is kept by the browser and wins over `UI_THEME`, which is what a browser with nothing picked gets.
+
+The dashboard refreshes every two seconds. It is a Svelte app in `ui/`, built into `ui/dist` and served by the mock server.
 
 These routes belong to the server itself and are never under the prefix:
 
@@ -352,7 +357,7 @@ A failing call gets the status you set, in place of the endpoint's own reply:
 { "error": "503: omnimock chaos: simulated error" }
 ```
 
-![The chaos card of the dashboard with chaos on](images/chaos.png)
+![The chaos card of the settings page with chaos on](images/chaos.png)
 
 - The response carries an `x-omnimock-chaos: true` header, so a test can tell an injected error from a real one.
 - A 429 or 503 also carries `Retry-After: 1`.
@@ -364,7 +369,7 @@ A failing call gets the status you set, in place of the endpoint's own reply:
 
 ## Request logging
 
-With `LOG_REQUESTS=ON`, an endpoint that calls the `logger` function adds each request to a log. In the dashboard, **View request log** pages through the logged requests, newest first, and has a button to clear the log.
+With `LOG_REQUESTS=ON`, an endpoint that calls the `logger` function adds each request to a log. In the dashboard, **View request log** (on the overview and the settings page) pages through the logged requests, newest first, and has a button to clear the log.
 
 ![The request log viewer](images/request-log.png)
 
@@ -536,7 +541,7 @@ The dashboard has its own `package.json` in `ui/`. For hot reload while changing
 npm run ui-dev
 ```
 
-It runs on http://localhost:5173/ and passes `/ping`, `/ui-meta`, `/ui-request-log` and `/api` on to the mock server on port 8000. Everything the dashboard shows comes from `/ui-meta`, which is built in `src/utilities/server-page.ts`.
+It runs on http://localhost:5173/ and passes `/ping`, `/ui-meta`, `/ui-request-log` and `/api` on to the mock server on port 8000. Everything the dashboard shows comes from `/ui-meta`, which is built in `src/utilities/server-page.ts`. The pages are listed in `pages` in `ui/src/App.svelte`, and each has its own component beside it.
 
 ### Tests and checks
 

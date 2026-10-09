@@ -11,9 +11,15 @@ describe('request log viewer', () => {
 	});
 
 	it('shows the logging settings', () => {
-		cy.visit('/');
+		cy.visit('/#/settings');
 		cy.get('[cy-data="log_requests"]').contains('ON');
 		cy.get('[cy-data="max_logged_requests"]').contains('10');
+	});
+
+	it('opens from the settings page too', () => {
+		cy.visit('/#/settings');
+		cy.get('[cy-data="request_log_link"]').click();
+		cy.get('[cy-data="viewer"]').should('be.visible');
 	});
 
 	it('says so when nothing has been logged', () => {

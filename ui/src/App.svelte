@@ -1,8 +1,45 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { fetchPing, fetchUiMeta, type UiMeta } from './api.js';
-	import ChaosCard from './ChaosCard.svelte';
+	import EndpointsPage from './EndpointsPage.svelte';
 	import LogViewer from './LogViewer.svelte';
+	import OverviewPage from './OverviewPage.svelte';
+	import SettingsPage from './SettingsPage.svelte';
+	import ThemeSwitch from './ThemeSwitch.svelte';
+
+	// The pages of the dashboard, in the order the sidebar lists them. Each is
+	// reached by its hash (`#/settings`); anything else shows the overview.
+	const pages = [
+		{
+			id: 'overview',
+			title: 'Overview',
+			icon: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+		},
+		{
+			id: 'endpoints',
+			title: 'Endpoints',
+			icon: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+		},
+		{
+			id: 'settings',
+			title: 'Settings',
+			icon: 'M4 7h9m4 0h3M4 17h3m4 0h9M15 5v4M9 15v4',
+		},
+	] as const;
+	type Route = (typeof pages)[number]['id'];
+
+	function routeFromHash(): Route {
+		const id = window.location.hash.replace(/^#\/?/, '');
+		return pages.find((item) => item.id === id)?.id ?? 'overview';
+	}
+
+	let route: Route = routeFromHash();
+
+	// A new page starts from its top
+	function showRoute() {
+		route = routeFromHash();
+		window.scrollTo(0, 0);
+	}
 
 	let meta: UiMeta | null = null;
 	let online: boolean | null = null;
@@ -10,11 +47,10 @@
 	let timer: number | null = null;
 	let logViewer: LogViewer;
 
-	// A list longer than this scrolls inside a fixed height window
-	const SCROLL_AFTER = 6;
 	$: endpointCount = meta?.apiLinks?.length ?? 0;
-	$: maxLogged = meta?.maxLoggedRequests ?? 10;
 	$: status = online === null ? 'Checking…' : online ? 'Running' : 'Not Running';
+
+	const viewLog = () => logViewer.open();
 
 	async function refresh() {
 		try {
@@ -40,113 +76,80 @@
 	});
 </script>
 
-<main>
-	<header class="pageHeader">
-		<section class="card">
+<svelte:window on:hashchange={showRoute} />
+
+<div class="shell">
+	<aside class="sidebar">
+		<a class="brand" href="#/">
+			<img src="/favicon.svg" alt="" width="28" height="28" />
+			<span>OmniMock</span>
+		</a>
+
+		<nav class="nav" aria-label="Pages">
+			{#each pages as item (item.id)}
+				<a
+					class="navLink"
+					class:active={route === item.id}
+					href={item.id === 'overview' ? '#/' : `#/${item.id}`}
+					aria-current={route === item.id ? 'page' : undefined}
+					cy-data="nav_{item.id}"
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d={item.icon} /></svg>
+					<span>{item.title}</span>
+					{#if item.id === 'endpoints'}
+						<span class="navCount">{endpointCount}</span>
+					{/if}
+				</a>
+			{/each}
+		</nav>
+
+		<p class="navGroup">Server</p>
+		<dl class="facts" cy-data="server_facts">
+			<div class="fact">
+				<dt>Port</dt>
+				<dd>{meta?.serverPort ?? '–'}</dd>
+			</div>
+			<div class="fact">
+				<dt>Prefix</dt>
+				<dd>{meta?.urlPrefix ? `/${meta.urlPrefix}` : '–'}</dd>
+			</div>
+		</dl>
+
+		<ThemeSwitch serverTheme={meta?.uiTheme} />
+		<p class="sidebarFoot muted">Refreshes every 2 seconds</p>
+	</aside>
+
+	<main>
+		<header class="pageHeader">
 			<div class="titleRow">
+				<h1>{pages.find((item) => item.id === route)?.title}</h1>
 				<div class="titleGroup">
-					<h1>OmniMock</h1>
 					{#if meta?.version}
 						<span class="versionPill" cy-data="server_version" title="omnimock version">
 							v{meta.version}
 						</span>
 					{/if}
-				</div>
-				<div
-					class="statusPill"
-					class:statusOnline={online}
-					class:statusOffline={!online}
-					cy-data="server_status"
-				>
-					{status}
+					<div
+						class="statusPill"
+						class:statusOnline={online}
+						class:statusOffline={!online}
+						cy-data="server_status"
+					>
+						{status}
+					</div>
 				</div>
 			</div>
 			<p class="errorLine muted">{error ?? ''}</p>
-		</section>
-	</header>
+		</header>
 
-	<section class="card" cy-data="server">
-		<h2>Server</h2>
-		<div class="grid">
-			<div class="kv">
-				<span class="muted">Server Address</span>
-				<span class="badge" cy-data="server_address">localhost</span>
-			</div>
-			<div class="kv">
-				<span class="muted">Server Port</span>
-				<span class="badge" cy-data="server_port">{meta?.serverPort ?? ''}</span>
-			</div>
-			<div class="kv">
-				<span class="muted">Server URL Prefix</span>
-				<span class="badge" cy-data="url_prefix">{meta?.urlPrefix || 'None'}</span>
-			</div>
-			<div class="kv">
-				<span class="muted">Project</span>
-				<span class="badge" cy-data="project_name">{meta?.projectName ?? ''}</span>
-			</div>
-			<div class="kv">
-				<span class="muted">Database Persistence</span>
-				<span class="badge" cy-data="db_persist">{meta?.dbPersist ?? 'OFF'}</span>
-			</div>
-		</div>
-	</section>
-
-	<section class="card" cy-data="endpoints">
-		<div class="titleGroup" style="margin: 0 0 12px 0;">
-			<h2 style="margin: 0;">API endpoints</h2>
-			<span class="countPill" cy-data="endpoint_count" title="Total API endpoints">
-				{endpointCount} {endpointCount === 1 ? 'endpoint' : 'endpoints'}
-			</span>
-		</div>
-		<div class="endpoints" class:scrollList={endpointCount > SCROLL_AFTER}>
-			{#each meta?.apiLinks ?? [] as link (link.href)}
-				<a class="endpointLink" cy-data="endpoint" href={link.href}>{link.label}</a>
-			{/each}
-		</div>
-		<p class="muted cardNote">
-			Each folder in <code>src/api</code> is an endpoint. A link opens its GET reply;
-			an endpoint may answer other methods and paths below it.
-			<a class="textLink" href="/api">List as JSON</a>
-		</p>
-	</section>
-
-	<ChaosCard {meta} />
-
-	<section class="card" cy-data="diagnostics">
-		<h2>Request log</h2>
-		<div class="grid">
-			<div class="kv">
-				<span class="muted">Request Log</span>
-				<span class="badge" cy-data="log_requests">{meta?.logRequests ?? 'OFF'}</span>
-			</div>
-			<div class="kv">
-				<span class="muted">Max Logged Requests</span>
-				<span class="badge" cy-data="max_logged_requests">
-					{maxLogged}
-				</span>
-			</div>
-			<div class="kv kvWide">
-				<span class="muted">Last Logged Requests</span>
-				<button
-					class="fileLink"
-					cy-data="request_log_link"
-					title={`View the last ${maxLogged} logged requests`}
-					on:click={() => logViewer.open()}
-				>
-					View request log
-				</button>
-			</div>
-		</div>
-		<p class="muted cardNote" cy-data="max_logged_requests_note">
-			The log keeps the last {maxLogged} requests made to endpoints
-			that call the <code>logger</code> function. To change this, set
-			<code>MAX_LOGGED_REQUESTS</code> (1 to 100) in <code>.env</code>.
-		</p>
-	</section>
-
-	<div class="footerNote">
-		Change settings in <code>.env</code> and restart the server.
-	</div>
-</main>
+		{#if route === 'overview'}
+			<OverviewPage {meta} {viewLog} />
+		{:else if route === 'endpoints'}
+			<EndpointsPage {meta} />
+		{:else}
+			<SettingsPage {meta} {viewLog} />
+		{/if}
+	</main>
+</div>
 
 <LogViewer bind:this={logViewer} loggingOn={meta?.logRequests === 'ON'} />

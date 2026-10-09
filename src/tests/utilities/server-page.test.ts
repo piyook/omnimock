@@ -79,6 +79,7 @@ describe('/ui-meta', () => {
 			chaosMode: 'every',
 			chaosErrorStatus: 500,
 			chaosInjected: 0,
+			uiTheme: 'dark',
 		});
 	});
 
@@ -90,6 +91,7 @@ describe('/ui-meta', () => {
 		vi.stubEnv('CHAOS_FREQUENCY', '4');
 		vi.stubEnv('CHAOS_MODE', 'random');
 		vi.stubEnv('CHAOS_STATUS', '503');
+		vi.stubEnv('UI_THEME', 'light');
 
 		const response = await buildApp().inject('/ui-meta');
 
@@ -101,6 +103,7 @@ describe('/ui-meta', () => {
 			chaosFrequency: 4,
 			chaosMode: 'random',
 			chaosErrorStatus: 503,
+			uiTheme: 'light',
 		});
 	});
 });
