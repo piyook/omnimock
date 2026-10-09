@@ -153,6 +153,7 @@ function serverPage(app: FastifyInstance, apiPaths: string[]) {
 			chaosMode: chaos.mode,
 			chaosErrorStatus: chaos.status,
 			chaosInjected: getChaosStats().injected,
+			uiTheme: uiTheme(),
 		});
 	});
 

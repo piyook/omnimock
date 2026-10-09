@@ -5,6 +5,17 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>OmniMock Dashboard</title>
+		<script>
+			// A theme picked on the dashboard wins over the one the server
+			// names on this page, and is set here so the page is drawn in it
+			// from the start
+			try {
+				const picked = localStorage.getItem('omnimock-theme');
+				if (picked === 'light' || picked === 'dark') {
+					document.documentElement.dataset.theme = picked;
+				}
+			} catch {}
+		</script>
 	</head>
 	<body>
 		<div id="app" style="padding:24px;">

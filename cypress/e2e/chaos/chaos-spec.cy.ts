@@ -14,6 +14,9 @@ describe('chaos mode', () => {
 		});
 
 		cy.visit('/');
+		cy.get('[cy-data="tile_chaos"]').contains('Every 2 calls');
+
+		cy.get('[cy-data="nav_settings"]').click();
 		cy.get('[cy-data="chaos_status"]').contains('ENABLED');
 		cy.get('[cy-data="chaos_frequency"]').contains('Every 2 calls');
 		cy.get('[cy-data="chaos_error_status"]').contains('503');

@@ -3,5 +3,8 @@
 	// Each folder in src/api is loaded by name at start-up (file-scan.ts), the
 	// MCP server is started on its own, and the templates are copied by hand
 	// into src when a new endpoint or model is added.
-	"entry": ["src/api/*/api.ts", "src/mcp/server.ts", "templates/**/*.ts"]
+	"entry": ["src/api/*/api.ts", "src/mcp/server.ts", "templates/**/*.ts"],
+	// An `export let` in a Svelte component is a prop, and components share
+	// prop names (`meta`), which would otherwise count as duplicate exports.
+	"ignoreExports": [{ "file": "ui/src/*.svelte", "exports": ["*"] }]
 }
