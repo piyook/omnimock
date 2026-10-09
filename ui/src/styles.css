@@ -3,13 +3,18 @@
 :root {
 	color-scheme: dark;
 	--bg-page: linear-gradient(120deg, #171425 0%, #13111c 70%, #0b0a12 100%);
-	--bg-header: #171425;
+	--bg-sidebar: #1c1830;
 	--bg-card: #211d33;
 	--bg-inset: rgba(255, 255, 255, 0.05);
 	--bg-code: rgba(0, 0, 0, 0.3);
 	--bg-link: #2e2850;
 	--accent: #7c5ce6;
+	/* The accent as a wash, behind something that is on, and as text on it */
+	--accent-soft: rgba(124, 92, 230, 0.24);
+	--accent-text: #b9a8f7;
 	--on-accent: #fff;
+	/* The track of a switch that is off */
+	--bg-track: rgba(255, 255, 255, 0.2);
 	--badge: #f2a93b;
 	--on-badge: #2a1c00;
 	--ok: #1f8a5b;
@@ -26,12 +31,15 @@
 :root[data-theme="light"] {
 	color-scheme: light;
 	--bg-page: linear-gradient(120deg, #f7f5fd 0%, #f2effa 70%, #e9e4f7 100%);
-	--bg-header: #f7f5fd;
+	--bg-sidebar: #fbfaff;
 	--bg-card: #fff;
 	--bg-inset: rgba(60, 40, 140, 0.06);
 	--bg-code: rgba(60, 40, 140, 0.07);
 	--bg-link: #ece7fb;
 	--accent: #6541d6;
+	--accent-soft: rgba(101, 65, 214, 0.12);
+	--accent-text: #5a37c9;
+	--bg-track: rgba(30, 20, 80, 0.22);
 	--badge: #f6c263;
 	--on-badge: #3a2800;
 	--danger: #b94a45;
@@ -50,36 +58,306 @@ body {
 	min-height: 100vh;
 	color: var(--text-main);
 	font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
-	background: var(--bg-page);
+	/* Fixed to the window, so the page header can paint the same gradient
+	   over the cards that scroll beneath it */
+	background: var(--bg-page) fixed;
+}
+
+/* The sidebar beside the page in view */
+.shell {
+	display: grid;
+	grid-template-columns: 240px minmax(0, 1fr);
+	min-height: 100vh;
+}
+
+/* Stays in view while the page scrolls */
+.sidebar {
+	position: sticky;
+	top: 0;
+	box-sizing: border-box;
+	height: 100vh;
+	padding: 20px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	overflow-y: auto;
+	background: var(--bg-sidebar);
+	border-right: 1px solid var(--divider);
+}
+
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 10px 18px 10px;
+	color: var(--text-main);
+	font-size: 1.25rem;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-decoration: none;
+}
+
+.nav {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.navLink,
+.themeSwitch {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 10px;
+	border-radius: 10px;
+	color: var(--text-muted);
+	font-weight: 650;
+	text-decoration: none;
+}
+
+.navLink svg,
+.themeSwitch svg {
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.navLink:hover,
+.navLink:focus-visible,
+.themeSwitch:hover,
+.themeSwitch:focus-visible {
+	background: var(--bg-inset);
+	color: var(--text-main);
+	outline: none;
+}
+
+/* The page in view */
+.navLink.active {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+
+.navCount {
+	margin-left: auto;
+	font-size: 0.85rem;
+}
+
+.navGroup {
+	margin: 22px 10px 4px 10px;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+}
+
+.facts {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.fact {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 7px 10px;
+}
+
+.fact dt {
+	color: var(--text-muted);
+}
+
+.fact dd {
+	margin: 0;
+	min-width: 0;
+	overflow: hidden;
+	color: var(--accent-text);
+	font-weight: 650;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The switch between the dark and light themes, at the foot of the sidebar */
+.themeSwitch {
+	margin-top: auto;
+	border: none;
+	background: none;
+	font: inherit;
+	font-weight: 650;
+	text-align: left;
+	cursor: pointer;
+}
+
+/* Its track, with a knob that sits at the far end while the dark theme is on */
+.toggle {
+	flex-shrink: 0;
+	margin-left: auto;
+	width: 36px;
+	height: 20px;
+	padding: 2px;
+	box-sizing: border-box;
+	border-radius: 999px;
+	background: var(--bg-track);
+	transition: background 0.15s;
+}
+
+.toggleKnob {
+	display: block;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+	transition: transform 0.15s;
+}
+
+.themeSwitch[aria-checked="true"] .toggle {
+	background: var(--accent);
+}
+
+.themeSwitch[aria-checked="true"] .toggleKnob {
+	transform: translateX(16px);
+}
+
+.sidebarFoot {
+	margin: 8px 10px 0 10px;
+	font-size: 0.85rem;
 }
 
 main {
-	/* Sized from the page width with the padding included, so it never
-	   overflows sideways on a narrow window */
 	box-sizing: border-box;
-	padding: 0 16px 40px 16px;
+	padding: 0 28px 40px 28px;
 	width: 100%;
-	max-width: 832px;
-	min-width: 320px;
-	margin: 0 auto 32px auto;
+	max-width: 1240px;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	gap: 24px;
+	gap: 20px;
 }
 
-/* Stays at the top while the cards scroll beneath it; the solid background
-   hides them as they pass */
+/* Stays at the top while the cards scroll beneath it; the background, the
+   same fixed gradient as the page's, hides them as they pass */
 .pageHeader {
 	position: sticky;
 	top: 0;
 	z-index: 1;
-	padding: 16px 0 12px 0;
+	padding: 22px 0 0 0;
 	margin-bottom: -12px;
-	background: var(--bg-header);
+	background: var(--bg-page) fixed;
+}
+
+/* On a narrow window the sidebar is a bar across the top, with the pages side
+   by side and the server's details left to the overview */
+@media (max-width: 860px) {
+	.shell {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.sidebar {
+		position: static;
+		height: auto;
+		padding: 12px 16px;
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+		border-right: none;
+		border-bottom: 1px solid var(--divider);
+	}
+
+	.brand {
+		padding: 4px 10px 4px 0;
+	}
+
+	.nav {
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+
+	/* At the far end of the bar */
+	.themeSwitch {
+		margin: 0 0 0 auto;
+	}
+
+	.navLink svg,
+	.navGroup,
+	.facts,
+	.sidebarFoot {
+		display: none;
+	}
+
+	main {
+		padding: 0 16px 40px 16px;
+	}
+}
+
+/* The figures across the top of the overview; each leads to its page */
+.tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+	gap: 16px;
+}
+
+.tile {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+	padding: 16px 18px;
+	border: 1.5px solid transparent;
+	border-radius: var(--border-radius);
+	background: var(--bg-card);
+	box-shadow: var(--shadow);
+	color: var(--text-main);
+	text-decoration: none;
+}
+
+.tile:hover,
+.tile:focus-visible {
+	border-color: var(--accent);
+	outline: none;
+}
+
+.tileLabel,
+.tileNote {
+	color: var(--text-muted);
+	font-size: 0.9rem;
+}
+
+.tileValue {
+	font-size: 1.5rem;
+	font-weight: 700;
+	overflow-wrap: anywhere;
+}
+
+/* Cards in two columns, each column keeping its own cards as they grow */
+.columns {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 20px;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	min-width: 0;
+}
+
+@media (max-width: 1100px) {
+	.columns {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
 .card {
+	/* Its rows go by the card's own width (see .grid) */
+	container-type: inline-size;
 	background: var(--bg-card);
 	border-radius: var(--border-radius);
 	box-shadow: var(--shadow);
@@ -88,28 +366,76 @@ main {
 
 .titleRow {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	justify-content: space-between;
+	flex-wrap: wrap;
 	gap: 12px;
 }
 
 h1 {
 	margin: 0;
-	font-size: 2.2rem;
-	letter-spacing: 1px;
+	font-size: 1.8rem;
+	letter-spacing: 0.5px;
 }
 
 .card h2 {
 	margin: 0 0 12px 0;
+	font-size: 1.2rem;
 }
 
 .titleGroup {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	flex-wrap: wrap;
 	gap: 12px;
 }
 
+/* A card's heading with something at the far end of its line */
+.cardHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.cardHead h2 {
+	margin: 0;
+}
+
+.cardLead {
+	margin: 0 0 12px 0;
+}
+
+.cardActions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 12px;
+}
+
+.featureList {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* Whether a feature is on */
+.state {
+	min-width: 2.2em;
+	padding: 3px 10px;
+	border-radius: 999px;
+	background: var(--bg-inset);
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	font-weight: 700;
+	text-align: center;
+}
+
+.state.on {
+	background: var(--accent-soft);
+	color: var(--accent-text);
+}
 .versionPill,
 .countPill {
 	border: 1.5px solid var(--accent);
@@ -135,7 +461,7 @@ h1 {
 	align-items: center;
 	gap: 8px;
 	border-radius: 10px;
-	padding: 8px 12px;
+	padding: 6px 12px;
 	font-weight: 700;
 	letter-spacing: 0.3px;
 	color: var(--on-accent);
@@ -155,13 +481,16 @@ h1 {
 	gap: 12px;
 }
 
-@media (max-width: 700px) {
+/* One value to a line once the card is too narrow for two */
+@container (max-width: 560px) {
 	.grid {
 		grid-template-columns: 1fr;
 	}
+}
 
+@media (max-width: 700px) {
 	h1 {
-		font-size: 1.6rem;
+		font-size: 1.5rem;
 	}
 }
 
@@ -175,6 +504,15 @@ h1 {
 	background: var(--bg-inset);
 }
 
+/* A value with a word on how it is set */
+.kvValue {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+}
+
 .badge {
 	background: var(--badge);
 	padding: 4px 10px;
@@ -184,9 +522,10 @@ h1 {
 	overflow-wrap: anywhere;
 }
 
+/* As many to a row as fit */
 .endpoints {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 	gap: 10px;
 }
 
@@ -195,8 +534,9 @@ h1 {
 	background: var(--bg-link);
 	color: var(--text-main);
 	text-decoration: none;
-	padding: 12px 0;
+	padding: 12px 10px;
 	border-radius: 10px;
+	overflow-wrap: anywhere;
 	font-weight: 650;
 	border: 1.5px solid var(--accent);
 	text-align: center;
@@ -228,6 +568,7 @@ h1 {
 	font-weight: 650;
 	cursor: pointer;
 	text-align: left;
+	text-decoration: none;
 	overflow-wrap: anywhere;
 }
 
@@ -236,23 +577,6 @@ h1 {
 	background: var(--accent);
 	color: var(--on-accent);
 	outline: none;
-}
-
-/* A long list keeps to a window about four rows high and scrolls inside it,
-   so the sections below stay within reach */
-.scrollList {
-	overflow-y: auto;
-	padding-right: 6px;
-	scrollbar-color: var(--accent) transparent;
-}
-
-.endpoints.scrollList {
-	max-height: 340px;
-}
-
-/* Rows in a scrolling list keep their height rather than squeeze to fit */
-.scrollList > * {
-	flex-shrink: 0;
 }
 
 .cardNote {
@@ -311,10 +635,6 @@ h1 {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-}
-
-.viewerTexts.scrollList {
-	max-height: 60vh;
 }
 
 .viewerTexts pre {

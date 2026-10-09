@@ -1,15 +1,8 @@
 <script lang="ts">
 	import type { UiMeta } from './api.js';
+	import { chaosFrequencyLabel } from './labels.js';
 
 	export let meta: UiMeta | null;
-
-	// How often a call fails: "Every call", "Every 3 calls" or "Random, 1 in 3"
-	function chaosFrequencyLabel(m: UiMeta): string {
-		if (m.chaosFrequency <= 1) return 'Every call';
-		return m.chaosMode === 'random'
-			? `Random, 1 in ${m.chaosFrequency}`
-			: `Every ${m.chaosFrequency} calls`;
-	}
 </script>
 
 <section class="card" cy-data="chaos">
@@ -35,7 +28,7 @@
 		{/if}
 	</div>
 	<p class="muted cardNote" cy-data="chaos_note">
-		Chaos answers some calls to the endpoints above with an HTTP error in place of
+		Chaos answers some calls to the endpoints with an HTTP error in place of
 		their reply. Set <code>CHAOS_ENABLED</code>, <code>CHAOS_FREQUENCY</code>,
 		<code>CHAOS_MODE</code> and <code>CHAOS_STATUS</code> in <code>.env</code>.
 	</p>

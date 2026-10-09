@@ -71,7 +71,7 @@ All in `.env`, read at start-up. `PROJECT_NAME`, `SERVER_PORT` and `USE_API_URL_
 - `USE_API_URL_PREFIX` (default `api`): the path all endpoints sit under. `prefix` from `src/utilities/env.ts` is that value with a trailing slash, or an empty string.
 - `LOG_REQUESTS`, `DELETE_LOGS_ON_SERVER_RESTART`, `MAX_LOGGED_REQUESTS` (1 to 100, default 10).
 - `CHAOS_ENABLED`, `CHAOS_FREQUENCY` (default 5), `CHAOS_MODE` (`every` or `random`), `CHAOS_STATUS` (400 to 599, default 500).
-- `UI_THEME` (`dark` or `light`, default `dark`): the dashboard's colours. The server writes it to `data-theme` on the page's `<html>` tag; the colours for each are in `ui/src/styles.css`.
+- `UI_THEME` (`dark` or `light`, default `dark`): the dashboard's colours. The server writes it to `data-theme` on the page's `<html>` tag; the colours for each are in `ui/src/styles.css`. The dashboard's **Dark theme** switch keeps a browser's own choice in `localStorage` as `omnimock-theme`, which wins over `UI_THEME`; a script in `ui/index.html` applies it before the page is drawn.
 - `MOCK_DB_PERSIST`, `MOCK_DB_PERSIST_PATH`, `MOCK_DB_SEED_ON_START`.
 
 On/off settings are the strings `ON` and `OFF`.
@@ -87,6 +87,7 @@ Never under the prefix, never failed by chaos: `GET /` (dashboard), `GET /api` (
 - **No CORS plugin is installed.** The file endpoints set `Access-Control-Allow-Origin: *` themselves. The README section on CORS describes adding `@fastify/cors`.
 - **The dashboard is a separate package.** `ui/` has its own `package.json`, lockfile and `tsconfig.json`, and uses TypeScript 6 because `svelte-check` does not yet support TypeScript 7, which the server uses. Run its scripts with `npm --prefix ui run <script>`. The root `tsconfig.json` and Biome's linting of `.svelte` files both leave it out.
 - **The dashboard reads only `/ui-meta` and `/ui-request-log`.** To show something new, add it to the reply in `src/utilities/server-page.ts`, to the `UiMeta` type in `ui/src/api.ts`, and to its unit test in `src/tests/utilities/server-page.test.ts`.
+- **The dashboard has three pages, chosen by the hash:** the overview (`/`, or any hash that names no page), `/#/endpoints` and `/#/settings`. Only the page in view is drawn, so an e2e test has to visit the right page (or click the sidebar link, `cy-data="nav_overview"`, `nav_endpoints` or `nav_settings`) before it looks for a setting or an endpoint.
 - **`ui/dist` is build output** and is not committed. Run `npm run compile-ui` after changing `ui/src`.
 - **Imports in `src` usually end in `.js`** (for example `'./utilities/env.js'`) although the files are `.ts`. Follow the file you are editing.
 - **The MCP server in `src/mcp` is separate** from the mock server. `npm run mcp:build` writes a `.js` file beside each `.ts` file there; those are build output and not committed. It talks over stdout, so use `console.error`, never `console.log`, in `src/mcp`. Its unit tests are in `src/tests/mcp`.
@@ -112,7 +113,7 @@ Never under the prefix, never failed by chaos: `GET /` (dashboard), `GET /api` (
 - [src/utilities/env.ts](src/utilities/env.ts): required settings and the URL prefix.
 - [src/utilities/aws-apigw-convert.ts](src/utilities/aws-apigw-convert.ts): Fastify request to API Gateway event, for Lambda handlers.
 - [src/models/db.ts](src/models/db.ts): the mock database.
-- [ui/src/App.svelte](ui/src/App.svelte): the dashboard.
+- [ui/src/App.svelte](ui/src/App.svelte): the dashboard's sidebar, header and list of pages; `OverviewPage.svelte`, `EndpointsPage.svelte` and `SettingsPage.svelte` beside it are the pages.
 - [scripts/run-e2e.mjs](scripts/run-e2e.mjs): the e2e runner and the settings each suite uses.
 - [.husky/pre-push](.husky/pre-push) and [.github/workflows/tests.yaml](.github/workflows/tests.yaml): the checks a change must pass.
 

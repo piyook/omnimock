@@ -12,6 +12,7 @@ export type UiMeta = {
 	chaosMode: 'every' | 'random';
 	chaosErrorStatus: number;
 	chaosInjected: number;
+	uiTheme: 'dark' | 'light';
 };
 
 export type RequestLog = {
