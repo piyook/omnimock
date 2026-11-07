@@ -2,7 +2,7 @@
 
 > OmniMock is a mock API server for localhost, built with Fastify and TypeScript. Each folder in `src/api` is an endpoint. It has an in-memory mock database, file serving, an error endpoint, chaos mode (injected HTTP errors), a request log and a Svelte dashboard. This file is a guide for coding agents working in this repository; the full documentation for people is [README.md](README.md).
 
-Node 24 (see `.nvmrc`), ES modules, TypeScript run directly by `tsx` with no build step for the server. The server listens on port 8000 by default.
+Node 26, the newest 26.x (`.nvmrc` and the Dockerfile name the major version only), ES modules, TypeScript run directly by `tsx` with no build step for the server. The server listens on port 8000 by default.
 
 ## Commands
 
@@ -10,6 +10,7 @@ Node 24 (see `.nvmrc`), ES modules, TypeScript run directly by `tsx` with no bui
 - `npm run dev`: builds the dashboard, then runs the server with `tsx watch` (restarts when a file in `src` changes). Use this while changing code.
 - `npm run dev:server`: the same without building the dashboard.
 - `npm start` / `npm stop` / `npm run rebuild`: the server in Docker. The image holds a copy of the code and `.env`, so a change needs `npm run rebuild`. `npm stop` and `npm run rebuild` remove the project's Docker volumes.
+- `npm run torch`: torch-it, set up in `torchrc.json`. It removes the project's Docker containers, images and volumes, `node_modules`, `coverage`, `ui/node_modules` and `ui/dist`, then reinstalls, rebuilds the image and starts it. It asks first; do not run it unless asked.
 - `npm run lint` (Biome), `npm run lint:fix`.
 - `npm run typecheck`: `tsc --noEmit` for the server and `svelte-check` for `ui/`.
 - `npm run test:coverage`: Vitest unit tests with coverage minimums.
@@ -95,7 +96,7 @@ Never under the prefix, never failed by chaos: `GET /` (dashboard), `GET /api` (
 
 ## Conventions
 
-- Formatting and linting are Biome's (`biome.json`): tabs, single quotes. Run `npm run lint:fix` instead of formatting by hand.
+- Formatting and linting are Biome's (`biome.json`): tabs, single quotes. Run `npm run lint:fix` instead of formatting by hand. Biome's Markdown and YAML formatters are off, so keep the existing layout of those files.
 - Unit tests live in `src/tests`, mirroring `src`, as `*.test.ts`. Coverage must stay at or above 90% statements, functions and lines and 85% branches over `src/models/db.ts` and `src/utilities/*.ts`, so new code in those needs tests.
 - Tests of settings use `vi.stubEnv`, and the logger's tests mock `node:fs` so that the real log file is never touched.
 - e2e specs are in `cypress/e2e`. Those in `cypress/e2e/chaos` run against a second server started with chaos on (`scripts/run-e2e.mjs`). Elements are selected by a `cy-data` attribute.

@@ -10,7 +10,7 @@ describe('default mock error endpoint works as expected', () => {
 		);
 	});
 
-	it('checks default error endpoint is running', () => {
+	it('returns the status and message given in the query', () => {
 		cy.request({
 			url: '/api/error?status=500&message=Internal%20Server%20Error',
 			failOnStatusCode: false,

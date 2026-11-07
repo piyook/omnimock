@@ -1,0 +1,5 @@
+{
+	"customPaths": ["ui/node_modules", "ui/dist"],
+	"dockerMode": true,
+	"dockerVolumes": true
+}
