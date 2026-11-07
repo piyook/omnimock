@@ -47,7 +47,7 @@ It is built with [Fastify](https://fastify.dev/) and TypeScript, and runs either
 
 ## Quick start
 
-You need Node.js 24 (the exact version is in `.nvmrc`). Docker is needed only for `npm start`.
+You need Node.js 26 (`.nvmrc` asks for the newest 26.x). Docker is needed only for `npm start`.
 
 ```bash
 npm install
