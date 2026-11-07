@@ -82,7 +82,7 @@ Open:
 | `npm start` | Start the server in Docker |
 | `npm stop` | Stop it and remove its containers and volumes |
 | `npm run rebuild` | Rebuild the image and start again (after changing code or `.env`) |
-| `npm run torch` | Remove everything Docker holds for the project and rebuild |
+| `npm run torch` | Remove the project's Docker containers, images and volumes, the installed packages and build output, then reinstall, rebuild and start it in Docker (settings in `torchrc.json`) |
 | `npm run dev` | Build the dashboard, then run the server with Node and restart it on changes |
 | `npm run dev:server` | Run the server with Node without building the dashboard |
 | `npm run ui-dev` | Dashboard dev server with hot reload (see [Working on the dashboard](#working-on-the-dashboard)) |
